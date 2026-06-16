@@ -1,0 +1,41 @@
+title: "Help Needed: [Brief description of the problem]"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Need help setting up or troubleshooting?
+        Please fill out this form to help the community troubleshoot your setup.
+  
+  - type: input
+    id: fancoil-model
+    attributes:
+      label: "Fancoil Model / PCB Board"
+      description: "Which fancoil model and board series (M7 or PU) are you using?"
+      placeholder: "Innova OSMO / PU Board"
+    validations:
+      required: true
+
+  - type: input
+    id: hardware
+    attributes:
+      label: "ESP32 & Transceiver Hardware"
+      placeholder: "M5Stack Atom Lite + RS485 Unit"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: "ESPHome Logs (Debug Mode)"
+      description: "Please paste relevant logs showing the Modbus connection or errors."
+      placeholder: "Paste logs here..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: issue-details
+    attributes:
+      label: "Description of the Problem"
+      placeholder: "Describe what is happening (e.g. communication timeout, wrong readings)..."
+    validations:
+      required: true

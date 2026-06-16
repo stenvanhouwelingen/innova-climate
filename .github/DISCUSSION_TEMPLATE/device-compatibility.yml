@@ -1,0 +1,54 @@
+title: "Verified Compatibility: [Fancoil Model / Brand]"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Share your verified fancoil setup!
+        Sharing your setup helps other community members know exactly which fancoil models and board topologies are verified to work with this ESPHome integration.
+  
+  - type: input
+    id: fancoil-model
+    attributes:
+      label: "Fancoil Model & Brand"
+      description: "e.g., Innova OSMO SL 400, Olimpia Splendid Bi2 Smart, Buderus Logacool"
+      placeholder: "Innova OSMO SL 400"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: board-type
+    attributes:
+      label: "Control Board Series"
+      description: "Which PCB controller board is in your fancoil?"
+      options:
+        - "PU (On-board control)"
+        - "M7 (Wall control)"
+        - "Other / Unknown"
+    validations:
+      required: true
+
+  - type: input
+    id: esphome-hardware
+    attributes:
+      label: "ESPHome Controller & Transceiver Setup"
+      description: "What ESP32/ESP8266 board and RS-485 converter did you use?"
+      placeholder: "M5Stack Atom Lite + M5Stack RS485 Unit"
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: "Integration Notes & Customizations"
+      description: "Did you need to adjust anything, or did it work out-of-the-box?"
+      placeholder: "Worked out-of-the-box. I used the default esphome-innova.yaml configuration."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: "Verification Confirmation"
+      options:
+        - label: "I confirm this setup is working successfully and has stable Modbus communications."
+          required: true
