@@ -59,10 +59,7 @@ class InnovaClimate : public climate::Climate, public Component {
     if (this->switch_power && this->switch_power->state) { // Switch state is true -> Standby is active -> climate is OFF
       new_mode = climate::CLIMATE_MODE_OFF;
     } else if (this->select_mode && this->select_mode->has_state()) {
-      std::string m = this->select_mode->current_option();
-      if (m == "Heating") new_mode = climate::CLIMATE_MODE_HEAT;
-      else if (m == "Cooling") new_mode = climate::CLIMATE_MODE_COOL;
-      else new_mode = climate::CLIMATE_MODE_AUTO;
+      new_mode = this->string_to_climate_mode_(this->select_mode->current_option());
     }
     if (new_mode != this->mode) {
       ESP_LOGD(TAG, "Changing climate mode from %s to %s",
@@ -94,11 +91,7 @@ class InnovaClimate : public climate::Climate, public Component {
 
     // Handle fan mode state changes efficiently
     if (this->select_fan && this->select_fan->has_state()) {
-      std::string f = this->select_fan->current_option();
-      climate::ClimateFanMode new_fan = climate::CLIMATE_FAN_AUTO;
-      if (f == "Night") new_fan = climate::CLIMATE_FAN_LOW;
-      else if (f == "Max") new_fan = climate::CLIMATE_FAN_HIGH;
-      else new_fan = climate::CLIMATE_FAN_AUTO;
+      climate::ClimateFanMode new_fan = this->string_to_fan_mode_(this->select_fan->current_option());
 
       if (!this->fan_mode.has_value() || new_fan != *this->fan_mode) {
         this->fan_mode = new_fan;
@@ -181,9 +174,7 @@ class InnovaClimate : public climate::Climate, public Component {
         }
         if (select_mode) {
           auto sel_call = select_mode->make_call();
-          std::string opt = "Auto";
-          if (new_mode == climate::CLIMATE_MODE_HEAT) opt = "Heating";
-          else if (new_mode == climate::CLIMATE_MODE_COOL) opt = "Cooling";
+          std::string opt = this->climate_mode_to_string_(new_mode);
           sel_call.set_option(opt);
           sel_call.perform();
           select_mode->publish_state(opt);
@@ -196,9 +187,7 @@ class InnovaClimate : public climate::Climate, public Component {
     if (call.get_fan_mode().has_value() && select_fan) {
       climate::ClimateFanMode new_fan = *call.get_fan_mode();
       auto fan_call = select_fan->make_call();
-      std::string opt = "Auto";
-      if (new_fan == climate::CLIMATE_FAN_LOW) opt = "Night";
-      else if (new_fan == climate::CLIMATE_FAN_HIGH) opt = "Max";
+      std::string opt = this->fan_mode_to_string_(new_fan);
       fan_call.set_option(opt);
       fan_call.perform();
       select_fan->publish_state(opt);
@@ -224,6 +213,39 @@ class InnovaClimate : public climate::Climate, public Component {
     traits.set_visual_max_temperature(30.0);
     traits.set_visual_temperature_step(0.5);
     return traits;
+  }
+
+ private:
+  std::string climate_mode_to_string_(climate::ClimateMode mode) {
+    if (mode == climate::CLIMATE_MODE_HEAT)
+      return "Heating";
+    if (mode == climate::CLIMATE_MODE_COOL)
+      return "Cooling";
+    return "Auto";
+  }
+
+  climate::ClimateMode string_to_climate_mode_(const std::string &mode_s) {
+    if (mode_s == "Heating")
+      return climate::CLIMATE_MODE_HEAT;
+    if (mode_s == "Cooling")
+      return climate::CLIMATE_MODE_COOL;
+    return climate::CLIMATE_MODE_AUTO;
+  }
+
+  std::string fan_mode_to_string_(climate::ClimateFanMode mode) {
+    if (mode == climate::CLIMATE_FAN_LOW)
+      return "Night";
+    if (mode == climate::CLIMATE_FAN_HIGH)
+      return "Max";
+    return "Auto";
+  }
+
+  climate::ClimateFanMode string_to_fan_mode_(const std::string &fan_s) {
+    if (fan_s == "Night")
+      return climate::CLIMATE_FAN_LOW;
+    if (fan_s == "Max")
+      return climate::CLIMATE_FAN_HIGH;
+    return climate::CLIMATE_FAN_AUTO;
   }
 };
 
