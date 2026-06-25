@@ -82,4 +82,8 @@ modbus:
 # =========================================================================
 packages:
   # Default to newer board family (n273025d). Change to innova_n273025c.yaml if using an older board.
-  innova_board: !include ../packages/innova_n273025d.yaml
+  innova_board:
+    url: https://github.com/stenvanhouwelingen/innova-climate
+    ref: 2026.6.25
+    files: 
+      - packages/innova_n273025d.yaml

@@ -98,10 +98,17 @@ packages:
   # Option A (Default): Leave this line active if you have a newer board family (n273025d)
   # Board numbers: ECA789, PUB-30, EEB749, ECA844, ECA044
   # Fancoils: OSMO, AirLeaf, FÄRNA, Filomuro newer versions
-  innova_board: !include packages/innova_n273025d.yaml
-
+  innova_board:
+    url: https://github.com/stenvanhouwelingen/innova-climate
+    ref: 2026.6.25
+    files: 
+      - packages/innova_n273025d.yaml
   # Option B: Comment out Option A and uncomment the line below if you have an older board family / bridge card (n273025c)
   # Board numbers: INN-FR-B32, ECA644, ECA647, EDA649, EDB649, ESE645, ESE648
   # Fancoils: Filoterra, older AirLeaf/Filomuro Slim Fit / built-in
   # (To use, uncomment the line below and comment out Option A above)
-  # innova_board: !include packages/innova_n273025c.yaml
+  # innova_board:
+  #   url: https://github.com/stenvanhouwelingen/innova-climate
+  #   ref: 2026.6.25
+  #   files: 
+  #     - packages/innova_n273025c.yaml
