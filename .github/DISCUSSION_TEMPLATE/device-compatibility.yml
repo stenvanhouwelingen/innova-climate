@@ -10,7 +10,7 @@ body:
     id: fancoil-model
     attributes:
       label: "Fancoil Model & Brand"
-      description: "e.g., Innova OSMO SL 400, Olimpia Splendid Bi2 Smart, Buderus Logacool"
+      description: "e.g., Innova OSMO SL 400, AirLeaf SL 200, Filomuro Slim Fit"
       placeholder: "Innova OSMO SL 400"
     validations:
       required: true

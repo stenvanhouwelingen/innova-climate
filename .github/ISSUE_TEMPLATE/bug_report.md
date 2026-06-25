@@ -10,7 +10,7 @@ assignees: ""
 A clear and concise description of what the bug is.
 
 ### Hardware Details
-- **Fancoil Model/Family**: (e.g., AirLeaf SL 400, Olimpia Splendid Bi2 smart)
+- **Fancoil Model/Family**: (e.g., AirLeaf SL 400, OSMO SL 200)
 - **Controller PCB**: (M7 or PU board)
 - **ESPHome Hardware**: (e.g., M5Stack Atom Lite + RS485 Unit, custom ESP32 + MAX485)
 - **Wiring Setup**: (e.g., A/B crossed, common GND connected?)
