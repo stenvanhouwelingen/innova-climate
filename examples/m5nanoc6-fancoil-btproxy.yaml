@@ -1,10 +1,10 @@
 substitutions:
   # Room name configuration (used for Home Assistant entity naming)
-  room_name: "bedroom"
-  friendly_room_name: "Bedroom"
+  room_name: attic
+  friendly_room_name: Attic
   
-  device_name: "innova-nanoc6-proxy"
-  friendly_name: "Innova Fancoil & BLE Proxy"
+  device_name: "innova-nanoc6-${room_name}"
+  friendly_name: "Innova Fancoil ${friendly_room_name}"
 
 esphome:
   name: "${device_name}"

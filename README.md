@@ -127,7 +127,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/stenvanhouwelingen/innova-climate
-      ref: 2026.6.0
+      ref: 2026.6.25
 ```
 
 ---

@@ -3,8 +3,8 @@ substitutions:
   room_name: "bedroom"
   friendly_room_name: "Bedroom"
   
-  device_name: "innova-atom-proxy"
-  friendly_name: "Innova Fancoil & BLE Proxy (Atom)"
+  device_name: "innova-atom-${room_name}"
+  friendly_name: "Innova Fancoil ${friendly_room_name}"
 
 esphome:
   name: "${device_name}"
