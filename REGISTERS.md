@@ -20,7 +20,7 @@ Innova fancoil systems belong to one of two firmware/register families. The phys
 * **Compatible User Interfaces**:
   * On-board Touchscreens: `ECA844II`, `EWA844II`, `ECA044II`, `EWA044II`
   * Remote Wall Panels: `EEB749II` (Standard), `EFB749II` (Wi-Fi), `EGB749II` (Bluetooth)
-* **ESPHome Package**: [`packages/innova_n273025d.yaml`](file:///Users/stenvanhouwelingen/Documents/antigravity/busy-chandrasekhar/packages/innova_n273025d.yaml)
+* **ESPHome Package**: [packages/innova_n273025d.yaml](packages/innova_n273025d.yaml)
 
 ### 2. Legacy / Retrofit Bridge Family (`n273025c`)
 * **Typical Fancoils**: Filoterra trench floor terminals, older AirLeaf, older Filomuro Slim Fit / built-in.
@@ -30,7 +30,7 @@ Innova fancoil systems belong to one of two firmware/register families. The phys
 * **Compatible User Interfaces**:
   * On-board Touchscreens: `ECA644`, `ECA647`
   * Remote Wall Panels: `EDA649`, `EDB649`, `EEA649II` / `EEB649II` / `EFA649II` / `EFB649II`
-* **ESPHome Package**: [`packages/innova_n273025c.yaml`](file:///Users/stenvanhouwelingen/Documents/antigravity/busy-chandrasekhar/packages/innova_n273025c.yaml)
+* **ESPHome Package**: [packages/innova_n273025c.yaml](packages/innova_n273025c.yaml)
 
 ---
 

@@ -94,13 +94,14 @@ The following registers are mapped and queried in this configuration:
 | **151** | Holding | `Alarms` | Unit Alarms Bitmask (Sensor faults, motor failure, clean filter) | Bitmask | R |
 | **198** | Holding | `Release` | Firmware Release Version | $0.1$ | R |
 | **199** | Holding | `ID` | Firmware Identifier (PU Default is `1190`) | - | R |
-| **304** | Holding | `Offset` | Temperature Calibration Offset | $0.1\ ^\circ\text{C}$ | R/W |
+| **302** | Holding | `SPL_W` | WEB Minimum Setpoint Limit | $1\ ^\circ\text{C}$ | R/W |
+| **303** | Holding | `SPH_W` | WEB Maximum Setpoint Limit | $1\ ^\circ\text{C}$ | R/W |
 | **305** | Holding | `SP` | Target Air Temperature Setpoint | $0.1\ ^\circ\text{C}$ | R/W |
-| **510** | Holding | `Min_W_Heat` | Minimum Water Temperature Limit for Heating | $0.1\ ^\circ\text{C}$ | R/W |
-| **511** | Holding | `Max_W_Cool` | Maximum Water Temperature Limit for Cooling | $0.1\ ^\circ\text{C}$ | R/W |
+| **457** | Holding | `FSW` | Flap Swing (Motorized Louvers) | - | R/W |
+| **530** | Holding | `OS1` | Room Temperature Calibration Offset | $0.1\ ^\circ\text{C}$ | R/W |
 | **553** | Holding | `PRG` | Program register: Fan Mode, Keypad Lock, Power Switch | Bitmask | R/W |
 | **556** | Holding | `MAN` | Season Selection: Auto (0), Heating (1), Cooling (2) | - | R/W |
-| **574** | Holding | `TY` | Unit Type Configuration | - | R/W |
+| **557** | Holding | `WEB` | Webserver Lockout Flags | Bitmask | R/W |
 
 ### Detailed Bitmasks in Register `553` (Program)
 * **Bits [2-0] (Mode)**: `000` (0) = Auto, `001` (1) = Night/Silent, `010` (2) = Max/High

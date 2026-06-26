@@ -15,14 +15,21 @@ CONF_SELECT_FAN = "select_fan"
 CONF_SWITCH_POWER = "switch_power"
 CONF_SENSOR_STATUS = "sensor_status"
 
-CONFIG_SCHEMA = climate.climate_schema(InnovaClimate).extend({
-    cv.Required(CONF_SENSOR_TEMP): cv.use_id(sensor.Sensor),
-    cv.Required(CONF_NUMBER_SETPOINT): cv.use_id(number.Number),
-    cv.Required(CONF_SELECT_MODE): cv.use_id(select.Select),
-    cv.Required(CONF_SELECT_FAN): cv.use_id(select.Select),
-    cv.Required(CONF_SWITCH_POWER): cv.use_id(switch.Switch),
-    cv.Optional(CONF_SENSOR_STATUS): cv.use_id(sensor.Sensor),
-}).extend(cv.COMPONENT_SCHEMA)
+CONFIG_SCHEMA = (
+    climate.climate_schema(InnovaClimate)
+    .extend(
+        {
+            cv.Required(CONF_SENSOR_TEMP): cv.use_id(sensor.Sensor),
+            cv.Required(CONF_NUMBER_SETPOINT): cv.use_id(number.Number),
+            cv.Required(CONF_SELECT_MODE): cv.use_id(select.Select),
+            cv.Required(CONF_SELECT_FAN): cv.use_id(select.Select),
+            cv.Required(CONF_SWITCH_POWER): cv.use_id(switch.Switch),
+            cv.Optional(CONF_SENSOR_STATUS): cv.use_id(sensor.Sensor),
+        }
+    )
+    .extend(cv.COMPONENT_SCHEMA)
+)
+
 
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])

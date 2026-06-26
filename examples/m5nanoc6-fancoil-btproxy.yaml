@@ -82,7 +82,7 @@ modbus:
 # INNOVA FANCOIL MODBUS PACKAGE
 # =========================================================================
 packages:
-  # Default to newer board family (n273025d). Change to innova_n273025c.yaml if using an older board.
+  # Default to newer board family (packages/innova_n273025d.yaml). Change to packages/innova_n273025c.yaml if using an older board.
   innova_board:
     url: https://github.com/stenvanhouwelingen/innova-climate
     ref: 2026.6.25

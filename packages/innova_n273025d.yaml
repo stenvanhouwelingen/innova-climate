@@ -49,6 +49,9 @@ sensor:
     value_type: S_WORD
     filters:
       - multiply: 0.1
+      - lambda: |-
+          if (x <= -30.0) return NAN;
+          return x;
     unit_of_measurement: "°C"
     device_class: "temperature"
     state_class: "measurement"
@@ -64,6 +67,9 @@ sensor:
     value_type: S_WORD
     filters:
       - multiply: 0.1
+      - lambda: |-
+          if (x <= -30.0) return NAN;
+          return x;
     unit_of_measurement: "°C"
     device_class: "temperature"
     state_class: "measurement"
