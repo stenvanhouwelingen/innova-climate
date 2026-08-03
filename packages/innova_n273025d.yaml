@@ -83,6 +83,8 @@ sensor:
     register_type: holding
     address: 20
     value_type: U_WORD
+    filters:
+      - multiply: 0.1
     unit_of_measurement: "%"
     device_class: "humidity"
     state_class: "measurement"
