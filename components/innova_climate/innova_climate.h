@@ -155,7 +155,8 @@ class InnovaClimate : public climate::Climate, public Component {
    climate::ClimateTraits traits() override {
      auto traits = climate::ClimateTraits();
      traits.add_feature_flags(climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE);
-     traits.set_supported_modes({climate::CLIMATE_MODE_OFF, climate::CLIMATE_MODE_HEAT, climate::CLIMATE_MODE_COOL, climate::CLIMATE_MODE_AUTO});
+     traits.add_feature_flags(climate::CLIMATE_SUPPORTS_ACTION);
+     traits.set_supported_modes({climate::CLIMATE_MODE_OFF, climate::CLIMATE_MODE_HEAT, climate::CLIMATE_MODE_COOL, climate::CLIMATE_MODE_HEAT_COOL});
      traits.set_supported_fan_modes({climate::CLIMATE_FAN_AUTO, climate::CLIMATE_FAN_LOW, climate::CLIMATE_FAN_HIGH});
      traits.set_visual_min_temperature(16.0);
      traits.set_visual_max_temperature(30.0);
@@ -186,8 +187,9 @@ class InnovaClimate : public climate::Climate, public Component {
        new_mode = this->mode_from_string_(this->select_mode->current_option());
      }
      if (new_mode != this->mode) {
-       ESP_LOGD(TAG, "Changing climate mode from %s to %s", climate::climate_mode_to_string(this->mode),
-                climate::climate_mode_to_string(new_mode));
+       ESP_LOGD(TAG, "Changing climate mode from %s to %s",
+                LOG_STR_ARG(climate::climate_mode_to_string(this->mode)),
+                LOG_STR_ARG(climate::climate_mode_to_string(new_mode)));
        this->mode = new_mode;
        return true;
      }
@@ -232,7 +234,7 @@ class InnovaClimate : public climate::Climate, public Component {
        return climate::CLIMATE_MODE_HEAT;
      if (m == "Cooling")
        return climate::CLIMATE_MODE_COOL;
-     return climate::CLIMATE_MODE_AUTO;
+     return climate::CLIMATE_MODE_HEAT_COOL;
    }
 
    std::string mode_to_string_(climate::ClimateMode m) {

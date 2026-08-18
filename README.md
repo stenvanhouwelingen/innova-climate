@@ -128,7 +128,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/stenvanhouwelingen/innova-climate
-      ref: 2026.6.25
+      ref: 2026.8.18
 ```
 
 ---
@@ -206,7 +206,17 @@ The local ESP32 runs a web server. If Home Assistant is ever down, you can contr
 
 ## Troubleshooting & Customization
 
-* **Device Times Out / No Data**: Ensure you have physically crossed the RS-485 `A` and `B` wires.
+* **Device Times Out / No Data**: 
+  * Ensure you have physically crossed the RS-485 `A` and `B` wires (swapping A and B is the most common cause of timeouts).
+  * **DIP Switch Settings (Enable Modbus RTU)**:
+    * **PU / PUB-30 boards**: Ensure on-board DIP switch **`F`** is set to **`ON`** at power-on.
+    * **ES690II / 6-DIP switch boards (Smart Touch / SWI series)**: Set **DIP switch `6`** to **`ON`** before applying power to switch the communication port to Modbus RTU.
+* **Standalone Operation (Without Wall Thermostat Panel)**:
+  * When operating the fancoil standalone via ESPHome without an official Innova wall panel, connect a standard **10 kΩ NTC probe** to the **`T1` / `AIR`** terminals on the PCB so the unit can read ambient room temperature. Alternatively, use Remote Supervisor Mode (Register `102`) to transmit external temperatures.
+* **Low-Temperature Heating Loops ($< 30^\circ\text{C}$ Water / Heat Pumps)**:
+  * By default, the fancoil enforces a minimum water temperature check (30 °C) before running the fan in heating mode.
+  * **PU Series boards (`n273025d`)**: Disconnect the **$T_2$ (Inlet Water)** temperature sensor from the PCB. Wait at least 1 minute and power on the fancoil. The board will detect the missing probe and permanently bypass the 30 °C heating interlock.
+  * **Bridge / Older boards (`n273025c`)**: Adjust the *Minimum Water Temperature for Heating* (Register `218` / `LLO`) down to your desired threshold via Home Assistant.
 * **Firmware Mismatch**: This configuration is verified on the **PU (on-board control)** boards with firmware ID `1190`. If your unit has a wall panel and registers different responses, check if it uses the **M7** register set.
 * **Humidity Setpoint (Register 312)**: Some newer units do not support Register 312. If you see Modbus Exception code `2` (Illegal Data Address), this register has been omitted in this configuration to preserve loop speed.
 

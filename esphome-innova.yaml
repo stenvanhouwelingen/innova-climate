@@ -6,7 +6,7 @@ external_components:
   - source:
       type: git
       url: https://github.com/stenvanhouwelingen/innova-climate
-      ref: 2026.6.25
+      ref: 2026.8.18
 
 esphome:
   name: "innova-${room_name}"
@@ -100,7 +100,7 @@ packages:
   # Fancoils: OSMO, AirLeaf, FÄRNA, Filomuro newer versions
   innova_board:
     url: https://github.com/stenvanhouwelingen/innova-climate
-    ref: 2026.6.25
+    ref: 2026.8.18
     files: 
       - packages/innova_n273025d.yaml
   # Option B: Comment out Option A and uncomment the lines below if you have an older board family / bridge card (packages/innova_n273025c.yaml)
@@ -109,6 +109,6 @@ packages:
   # (To use, uncomment the line below and comment out Option A above)
   # innova_board:
   #   url: https://github.com/stenvanhouwelingen/innova-climate
-  #   ref: 2026.6.25
+  #   ref: 2026.8.18
   #   files: 
   #     - packages/innova_n273025c.yaml
