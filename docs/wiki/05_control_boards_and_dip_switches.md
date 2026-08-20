@@ -5,16 +5,41 @@ Innova fancoil units utilize several generations of onboard electronic control b
 ---
 
 ## 1. Board Family Identification
+Innova fancoils use three primary electronic board families depending on the model and generation:
 
-| Board Model | Typical Units | DIP Switch Count | Modbus Activation Switch |
-| :--- | :--- | :---: | :--- |
-| **PUB-30 / PU Series** | AirLeaf (exposed), >OSMO<, FÄRNA, Ducto | 4 + Jumper | **DIP Switch `F = ON`** (or Switch 1) at power-on |
-| **ES690II / Smart Touch** | Filomuro SWI 400 (in-wall), newer Smart Touch | 6 | **DIP Switch `6 = ON`** before power-on |
-| **INN-FR-B32 / ESE645** | Filoterra, older Filomuro Slim Fit | 4 | ASCII/RTU Jumper |
+| Board Family | Board Part Numbers | Typical Units | Key Identification |
+| :--- | :--- | :--- | :--- |
+| **PU / PUB-30 Series** | `PUB-30`, `ECA789`, `EEB749`, `ECA844`, `ECA044` | AirLeaf (exposed), >OSMO<, FÄRNA, Ducto | 4 DIP switches + Jumper. Firmware ID `1190`. |
+| **Smart Touch / ES690 Series** | `ES690II`, `ESE690II`, `ES690` | Filomuro SWI 400 (in-wall), Smart Touch wall controls | **6 DIP switches**. No ASCII jumper. |
+| **Bridge / Retrofit Series** | `INN-FR-B32`, `ESE645`, `ESE648`, `EDA649`, `EDB649`, `ECA644`, `ECA647` | Filoterra (in-floor), older Filomuro Slim Fit, older AirLeaf built-in | 4 DIP switches + ASCII/RTU Jumper. Programmable `LLO` register 218. |
 
 ---
 
-## 2. DIP Switch Configuration for Modbus RTU
+## 2. RS-485 Modbus Wiring & Terminal Pinouts
+
+The RS-485 Modbus serial connection is made on the terminal block labeled **`+ A B -`** (or **`+ A B GND`**) on the main board:
+
+```
+     INNOVA PCB SERIAL TERMINAL BLOCK               ESPHome / RS-485 CONVERTER
+    ┌─────────────────────────────────┐             ┌─────────────────────────┐
+    │  [+]  Aux 5V/12V Power (Opt.)   │────────────►│ VCC (Optional)          │
+    │  [A]  RS-485 Non-inverting (D+) │────────────►│ A (D+)                  │
+    │  [B]  RS-485 Inverting (D-)     │────────────►│ B (D-)                  │
+    │  [-]  Signal Ground (GND)       │────────────►│ GND (Common Ground)     │
+    └─────────────────────────────────┘             └─────────────────────────┘
+```
+
+### Cabling Best Practices:
+* **Cable Type**: Use shielded twisted-pair cable (STP), such as Belden 9841, LiYCY $2 \times 0.35\text{ mm}^2$, or standard Cat5e/Cat6 (using one twisted pair for A/B and one wire for GND).
+* **The #1 Gotcha: A/B Line Polarity**:
+  * If ESPHome reports continuous Modbus timeouts (`Modbus checksum error` or `No response from slave 1`), **swap the `A` and `B` wires**. Different transceiver manufacturers occasionally label $D+$ as B and $D-$ as A.
+* **120 Ω Bus Termination**:
+  * For short runs ($< 20\text{ meters}$), termination resistors are usually unnecessary.
+  * For long bus runs ($> 50\text{ meters}$) with multiple daisy-chained fancoils, add a $120\ \Omega\ (1/4\text{W})$ resistor across `A` and `B` at the farthest end of the line.
+
+---
+
+## 3. DIP Switch Configuration for Modbus RTU
 
 The board microcontroller samples the physical switch positions **only during bootloader initialization (at power-on)**. Any switch changes made while the board is powered will be ignored until mains power is cycled.
 

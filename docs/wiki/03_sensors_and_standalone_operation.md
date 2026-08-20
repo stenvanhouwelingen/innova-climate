@@ -21,24 +21,27 @@ All temperature sensor inputs on Innova controller boards are designed for stand
 
 ## 2. $T_1$ Ambient Air Sensor & Standalone Wiring
 
-### Where is the Sensor Normally Located?
-* On units equipped with an official Innova wall thermostat panel (e.g. Smart Touch), the ambient temperature sensor is integrated inside the wall panel.
-* On bare in-wall / built-in fancoil units (e.g., **Filomuro SWI 400**, **Airleaf SLI**), Innova ships the fancoil without a physical room temperature sensor attached.
+### Where is the Sensor Physically Mounted?
+* On standard exposed fancoils (such as the **AirLeaf SL**, **>OSMO<**, and **FÄRNA**), the physical $T_1$ probe is clipped directly into the **lower suction / air intake grille** (behind the air filter) and wired into the `AIR` / `T1` terminal block on the PCB.
+* On bare in-wall / built-in fancoil units (e.g., **Filomuro SWI 400**, **AirLeaf SLI**), Innova ships the fancoil without a physical room temperature probe pre-attached.
+* If an optional remote wall-mounted thermostat panel is installed on the room wall, the system can be configured to read temperature from the wall plate instead.
 
-### The Standalone Setup (Without Wall Panel)
-If you operate the fancoil standalone using ESPHome without an official Innova wall thermostat:
-1. Obtain any standard **$10\text{ k}\Omega\text{ NTC}$ temperature probe** (two wires).
-2. Connect the two probe wires into the screw terminals marked **`T1`** (or **`AIR`**) on the main PCB.
-3. Position the sensor tip in the return air path beneath the air filter.
+### What is "Standalone" Operation?
+> **Definition**: **Standalone Operation** means running the fancoil directly from an ESP32 (ESPHome) via Modbus RTU **without purchasing or mounting any Innova touch control panel** (such as the on-board display or the Smart Touch wall panel).
+
+### Wiring $T_1$ in a Standalone Setup
+If your unit did not come with a probe or was previously driven by a wall screen:
+1. Connect any standard **$10\text{ k}\Omega\text{ NTC}$ temperature probe** (two wires) into the screw terminals marked **`T1`** (or **`AIR`**) on the main PCB.
+2. Clip the sensor bead in the air intake path beneath the air filter.
 
 > [!WARNING]
-> If nothing is connected to the $T_1$ terminals, the PCB detects an open circuit ($-30^\circ\text{C}$), sets **Alarm Register 151 Bit 1 (`T1 Air Temp Sensor Fault`)**, and immediately shuts down the fancoil.
+> If nothing is connected to the $T_1$ terminals, the PCB detects an open circuit ($-30^\circ\text{C}$), sets **Alarm Register 151 Bit 1 (`T1 Air Temp Sensor Fault`)**, and immediately halts all fan and valve operations.
 
 ---
 
 ## 3. $T_2$ Inlet Water Sensor Mechanics
 
-The inlet water sensor acts as a thermal gatekeeper:
+The inlet water sensor ($T_2$ / $H_2$) measures the incoming supply water from the heat pump and acts as an automatic safety gatekeeper:
 
 ```
                            [ INLET WATER SENSOR (T2) ]
@@ -50,16 +53,17 @@ The inlet water sensor acts as a thermal gatekeeper:
     T2 < 30°C  ──► FAN BLOCKED (Cold Draft Safety)             T2 > 20°C  ──► FAN BLOCKED (Warm Draft Safety)
 ```
 
-* **Cold-Draft Prevention**: Prevents the fan from blowing unheated air into the room before the hot water loop has reached temperature.
-* **Warm-Draft Prevention**: In cooling mode, delays fan start until chilled water has chilled the coil to prevent blowing warm, humid room air.
+* **Cold-Draft Prevention (Heating)**: Prevents the fan from blowing unheated air into the room before the hot water loop has reached temperature.
+* **Warm-Draft Prevention (Cooling)**: In cooling mode, delays fan start until chilled water has chilled the coil to prevent blowing warm, humid room air.
 
 ---
 
-## 4. $T_3$ Internal Coil Sensor
+## 4. $T_3$ Internal Coil Water Sensor
 
-* Placed in direct contact with the internal copper coil fins.
-* Triggers **Alarm Register 151 Bit 5** if the internal coil temperature deviates significantly from expected thresholds during operation.
-* Provides rapid frost protection in the event that water flow drops while cooling below freezing.
+The $T_3$ ($H_4$) sensor is embedded in direct physical contact with the copper U-bends of the internal heat exchanger coil:
+* **Coil Water Adequacy**: Verifies that the internal coil is actively heating ($> 30^\circ\text{C}$) or cooling ($< 20^\circ\text{C}$). If temperature is inadequate, the controller pauses the fan (Status Register 150, Bit 5).
+* **Trend Monitoring**: Checks if the temperature trend is stable (Status Register 150, Bit 6). If water flow stops (e.g. pump failure), the coil rapidly normalizes to room temperature and the fancoil pauses.
+* **Antifreeze / Frost Protection**: If air or coil temperature drops below **$5.0^\circ\text{C}$**, the controller forces the water valve open and sets Status Register 150 Bit 7 (`Antifreeze active`) to circulate water and prevent frozen/burst copper pipes.
 
 ---
 

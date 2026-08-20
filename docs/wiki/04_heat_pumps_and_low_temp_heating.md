@@ -53,14 +53,14 @@ Innova designed the controller firmware to recognize when a unit is installed wi
 
 ### Method 2: The 47 kΩ Parallel Resistor Hack (Community Mod)
 
-For users who want to keep live water temperature monitoring in Home Assistant while enabling heating at $26^\circ\text{C}$:
+Some community members have experimented with soldering or clipping a standard **$47\text{ k}\Omega$ resistor** in parallel across the leads of the $10\text{ k}\Omega\text{ NTC}$ $T_2$ water sensor to artificially lower the resistance seen by the analog-to-digital converter, shifting the reading up by $\approx +4^\circ\text{C}$.
 
-1. Solder or clip a standard **$47\text{ k}\Omega$ metal film resistor** in parallel across the two leads of the $10\text{ k}\Omega\text{ NTC}$ $T_2$ water sensor.
-2. **Result**:
-   * Placing $47\text{ k}\Omega$ in parallel with the thermistor lowers the effective resistance seen by the analog-to-digital converter.
-   * This artificially shifts the temperature reading up by approximately **$+3.5^\circ\text{C}\ \text{to}\ +4.5^\circ\text{C}$**.
-   * When actual water temperature is **$26.5^\circ\text{C}$**, the PCB reads **$30.5^\circ\text{C}$**, clearing the 30 °C gate and allowing heating to commence.
-   * Safety limits remain functional (just with a shifted baseline).
+> [!CAUTION]
+> **Major Drawbacks & Why Method 1 is Recommended Instead**:
+> 1. **Breaks Cooling Mode**: Shifting the temperature reading $+4^\circ\text{C}$ means that during summer, when chilled water is at $18^\circ\text{C}$, the PCB reads $22^\circ\text{C}$. Because $22^\circ\text{C} > 20^\circ\text{C}$, the fancoil thinks the water is too warm and **blocks the fan in cooling mode**!
+> 2. **Inaccurate Sensor Values**: The water temperature reported to Home Assistant is distorted and non-linear across the curve.
+> 
+> **Conclusion**: **Method 1 (Disconnecting $T_2$) is the cleanest and recommended approach** for heating and cooling systems.
 
 ---
 
