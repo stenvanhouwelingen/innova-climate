@@ -1,0 +1,43 @@
+name: Sync Wiki
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/wiki/**'
+      - '.github/workflows/sync-wiki.yaml'
+  workflow_dispatch:
+
+jobs:
+  sync-wiki:
+    name: Sync docs/wiki to GitHub Wiki
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Push to GitHub Wiki
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Clone the GitHub Wiki repository
+          git clone "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git" wiki-repo || {
+            echo "::warning::GitHub Wiki repository could not be cloned. Make sure Wikis are enabled in repository Settings and at least one initial page has been created."
+            exit 0
+          }
+          
+          # Copy all markdown docs into the wiki repository
+          cp -r docs/wiki/* wiki-repo/
+          
+          cd wiki-repo
+          git add .
+          if git diff-index --quiet HEAD --; then
+            echo "Wiki is already up to date."
+          else
+            git commit -m "docs(wiki): sync documentation from docs/wiki [skip ci]"
+            git push origin HEAD
+          fi
