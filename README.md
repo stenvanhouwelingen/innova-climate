@@ -129,15 +129,28 @@ If you are using the ESPHome Dashboard (via the Home Assistant add-on or standal
 
 ---
 
-### Method A: Remote GitHub Import (Alternative)
-If you are creating your own configuration from scratch, you can import this component by adding the following `external_components` block to your YAML:
+### Method A: Remote GitHub Import (Recommended)
+If you are creating your own configuration from scratch or using packages, you can import this component by pinning to an official release tag in your `external_components` and `packages` blocks:
 ```yaml
 external_components:
   - source:
       type: git
       url: https://github.com/stenvanhouwelingen/innova-climate
       ref: 2026.8.18
+
+packages:
+  innova_board:
+    url: https://github.com/stenvanhouwelingen/innova-climate
+    ref: 2026.8.18
+    files: 
+      - packages/innova_n273025d.yaml
 ```
+
+> [!TIP]
+> **Production Best Practice: Version Pinning**  
+> We strongly recommend pinning to a specific release tag (e.g. `ref: 2026.8.18`) rather than `ref: main`.  
+> * **Why**: Pinning guarantees that your heating and cooling setup is 100% immutable and protected against unexpected changes. Your devices will never pull unreleased or untested commits during routine recompilations.  
+> * **How to Upgrade**: When a new version is released, simply bump the `ref:` string in your YAML to the new release tag.
 
 ---
 
@@ -194,11 +207,13 @@ Once the device is flashed and connected to Wi-Fi, it will be automatically disc
 2. Under the discovered integrations, locate **Innova Bedroom** (or your designated room name) and click **Configure**.
 3. Confirm the configuration. If prompted, input the API encryption key (configured as `api_key` in your `secrets.yaml`).
 4. The following entities will become available:
-   * **Climate Entity**: `climate.innova_bedroom_thermostat` (provides Mode, Setpoint, and Fan Speed controls).
-   * **Sensors**: Water Temperatures ($T_2, T_3$), Relative Humidity, diagnostics (Uptime, Wi-Fi, Firmware).
+   * **Climate Entity**: `climate.innova_bedroom_thermostat` (provides Mode, Setpoint, Fan Speed controls, and active heating/cooling action states).
+   * **Flap Swing Switch**: `switch.innova_bedroom_flap_swing` (toggles motorized air louver oscillation for high-wall Filomuro units).
+   * **Window Contact Sensor**: `binary_sensor.innova_bedroom_window_contact_in1` (indicates when the fancoil is paused via the `IN1` contact).
+   * **Sensors**: Water Temperatures ($T_2, T_3$), Relative Humidity ($0.1\%$ filtered), Wi-Fi Signal, and Device Uptime.
    * **Diagnostic Text Sensors**: Fully decoded, human-readable status description and alarm code reporting.
    * **Configuration Numbers**: Temp Calibration Offset, Min Water Limit Heating, Max Water Limit Cooling.
-   * **Configuration Switches**: Local Keypad Lock.
+   * **Configuration Switches**: Local Keypad Lock, Force Off, and Webserver lockout controls.
 
 ---
 
