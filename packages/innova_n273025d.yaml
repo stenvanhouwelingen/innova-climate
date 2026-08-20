@@ -79,6 +79,7 @@ sensor:
   - platform: modbus_controller
     modbus_controller_id: innova_fan
     name: "Relative Humidity"
+    id: rel_humidity_${room_name}
     register_type: holding
     address: 20
     value_type: U_WORD
@@ -97,6 +98,7 @@ sensor:
   - platform: modbus_controller
     modbus_controller_id: innova_fan
     name: "Firmware Release"
+    id: innova_fw_release_${room_name}
     register_type: holding
     address: 198
     value_type: U_WORD
@@ -110,6 +112,7 @@ sensor:
   - platform: modbus_controller
     modbus_controller_id: innova_fan
     name: "Firmware Identifier"
+    id: innova_fw_id_${room_name}
     register_type: holding
     address: 199
     value_type: U_WORD
@@ -208,6 +211,44 @@ text_sensor:
   - platform: template
     name: "Fan Status"
     id: innova_fan_status_${room_name}
+
+  - platform: template
+    name: "Detected Hardware Features"
+    id: innova_hardware_features_${room_name}
+    entity_category: "diagnostic"
+    icon: "mdi:chip"
+    lambda: |-
+      int status = (int)id(innova_status_reg_${room_name}).state;
+      std::string features = "Board: PU";
+      if (id(innova_fw_release_${room_name}).has_state()) {
+        char buf[16];
+        snprintf(buf, sizeof(buf), " v%.1f", id(innova_fw_release_${room_name}).state);
+        features += buf;
+      }
+      
+      // Probe T2 (Inlet Water)
+      if (status & (1 << 12)) {
+        features += " | T2: Absent (Low-Temp Bypass)";
+      } else {
+        features += " | T2: Connected";
+      }
+      
+      // Probe T3 (Coil Water)
+      if (status & (1 << 13)) {
+        features += " | T3: Absent";
+      } else {
+        features += " | T3: Connected";
+      }
+      
+      // Relative Humidity Probe
+      if (id(rel_humidity_${room_name}).has_state() && id(rel_humidity_${room_name}).state > 0.0) {
+        features += " | RH: Fitted";
+      } else {
+        features += " | RH: Not Fitted";
+      }
+      
+      return features;
+    update_interval: 60s
 
 binary_sensor:
   - platform: template
@@ -411,19 +452,6 @@ switch:
       - lambda: 'id(keypad_lock).publish_state(true);'
     on_turn_off:
       - lambda: 'id(keypad_lock).publish_state(false);'
-
-  - platform: modbus_controller
-    modbus_controller_id: innova_fan
-    name: "Flap Swing"
-    id: flap_swing
-    register_type: holding
-    address: 457
-    entity_category: "config"
-    skip_updates: 1000
-    on_turn_on:
-      - lambda: 'id(flap_swing).publish_state(true);'
-    on_turn_off:
-      - lambda: 'id(flap_swing).publish_state(false);'
 
   - platform: modbus_controller
     modbus_controller_id: innova_fan

@@ -79,6 +79,7 @@ sensor:
   - platform: modbus_controller
     modbus_controller_id: innova_fan
     name: "Relative Humidity"
+    id: rel_humidity_${room_name}
     register_type: holding
     address: 20
     value_type: U_WORD
@@ -182,6 +183,24 @@ text_sensor:
   - platform: template
     name: "Fan Status"
     id: innova_fan_status_${room_name}
+
+  - platform: template
+    name: "Detected Hardware Features"
+    id: innova_hardware_features_${room_name}
+    entity_category: "diagnostic"
+    icon: "mdi:chip"
+    lambda: |-
+      std::string features = "Board: Bridge (n273025c)";
+      
+      // Relative Humidity Probe
+      if (id(rel_humidity_${room_name}).has_state() && id(rel_humidity_${room_name}).state > 0.0) {
+        features += " | RH: Fitted";
+      } else {
+        features += " | RH: Not Fitted";
+      }
+      
+      return features;
+    update_interval: 60s
 
 binary_sensor:
   - platform: template
