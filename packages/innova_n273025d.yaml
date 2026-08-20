@@ -85,6 +85,9 @@ sensor:
     value_type: U_WORD
     filters:
       - multiply: 0.1
+      - lambda: |-
+          if (x <= 0.0) return NAN;
+          return x;
     unit_of_measurement: "%"
     device_class: "humidity"
     state_class: "measurement"
@@ -419,7 +422,7 @@ switch:
       - lambda: 'id(power_switch).publish_state(false);'
 
   # ==========================================
-  # MOTORIZED FLAP / LOUVER CONTROL
+  # MOTORIZED FLAP / LOUVER CONTROL (FILOMURO)
   # ==========================================
   - platform: modbus_controller
     modbus_controller_id: innova_fan
@@ -429,6 +432,8 @@ switch:
     address: 457
     bitmask: 0x0001
     icon: "mdi:weather-windy"
+    entity_category: "config"
+    disabled_by_default: true
     force_new_range: true
     skip_updates: 10
     on_turn_on:

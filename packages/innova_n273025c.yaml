@@ -85,6 +85,9 @@ sensor:
     value_type: U_WORD
     filters:
       - multiply: 0.1
+      - lambda: |-
+          if (x <= 0.0) return NAN;
+          return x;
     unit_of_measurement: "%"
     device_class: "humidity"
     state_class: "measurement"
