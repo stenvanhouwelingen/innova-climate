@@ -82,6 +82,8 @@ sensor:
     register_type: holding
     address: 20
     value_type: U_WORD
+    filters:
+      - multiply: 0.1
     unit_of_measurement: "%"
     device_class: "humidity"
     state_class: "measurement"
@@ -213,6 +215,18 @@ binary_sensor:
     id: innova_alarm_status_${room_name}
     device_class: "problem"
     entity_category: "diagnostic"
+
+  - platform: modbus_controller
+    modbus_controller_id: innova_fan
+    name: "Window Contact (IN1)"
+    id: window_contact_${room_name}
+    register_type: holding
+    address: 151
+    bitmask: 0x0100
+    device_class: "window"
+    entity_category: "diagnostic"
+    force_new_range: true
+    skip_updates: 2
 
   - platform: modbus_controller
     modbus_controller_id: innova_fan
@@ -362,6 +376,24 @@ switch:
       - lambda: 'id(power_switch).publish_state(true);'
     on_turn_off:
       - lambda: 'id(power_switch).publish_state(false);'
+
+  # ==========================================
+  # MOTORIZED FLAP / LOUVER CONTROL
+  # ==========================================
+  - platform: modbus_controller
+    modbus_controller_id: innova_fan
+    name: "Flap Swing"
+    id: flap_swing_${room_name}
+    register_type: holding
+    address: 457
+    bitmask: 0x0001
+    icon: "mdi:weather-windy"
+    force_new_range: true
+    skip_updates: 10
+    on_turn_on:
+      - lambda: 'id(flap_swing_${room_name}).publish_state(true);'
+    on_turn_off:
+      - lambda: 'id(flap_swing_${room_name}).publish_state(false);'
 
   # ==========================================
   # VISIBLE SWITCHES

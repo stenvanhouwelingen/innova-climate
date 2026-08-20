@@ -1,0 +1,141 @@
+name: ESPHome CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    name: Validate ESPHome Configurations
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install ESPHome
+        run: |
+          pip install --upgrade pip
+          pip install esphome
+
+      - name: Validate Package D (n273025d)
+        run: |
+          cat << 'EOF' > test_n273025d.yaml
+          substitutions:
+            room_name: "test"
+            friendly_room_name: "Test"
+
+          external_components:
+            - source:
+                type: local
+                path: components
+
+          esphome:
+            name: "innova-test"
+            friendly_name: "Innova Test"
+
+          esp32:
+            board: esp32-c6-devkitm-1
+            framework:
+              type: esp-idf
+
+          logger:
+            level: DEBUG
+
+          wifi:
+            ssid: "Test"
+            password: "Password123"
+
+          api:
+            encryption:
+              key: "EmdRegYL+GFqTKUoFf31L6hB+P/W3sOkprv1hZNBo04="
+
+          ota:
+            - platform: esphome
+
+          uart:
+            id: modbus_uart
+            tx_pin: 2
+            rx_pin:
+              number: 1
+              mode: INPUT_PULLUP
+            baud_rate: 9600
+            stop_bits: 1
+            rx_timeout: 10
+
+          modbus:
+            id: modbus_bus
+            uart_id: modbus_uart
+            send_wait_time: 500ms
+
+          packages:
+            innova_board: !include packages/innova_n273025d.yaml
+          EOF
+          esphome config test_n273025d.yaml
+
+      - name: Validate Package C (n273025c)
+        run: |
+          cat << 'EOF' > test_n273025c.yaml
+          substitutions:
+            room_name: "test"
+            friendly_room_name: "Test"
+
+          external_components:
+            - source:
+                type: local
+                path: components
+
+          esphome:
+            name: "innova-test"
+            friendly_name: "Innova Test"
+
+          esp32:
+            board: esp32-c6-devkitm-1
+            framework:
+              type: esp-idf
+
+          logger:
+            level: DEBUG
+
+          wifi:
+            ssid: "Test"
+            password: "Password123"
+
+          api:
+            encryption:
+              key: "EmdRegYL+GFqTKUoFf31L6hB+P/W3sOkprv1hZNBo04="
+
+          ota:
+            - platform: esphome
+
+          uart:
+            id: modbus_uart
+            tx_pin: 2
+            rx_pin:
+              number: 1
+              mode: INPUT_PULLUP
+            baud_rate: 9600
+            stop_bits: 1
+            rx_timeout: 10
+
+          modbus:
+            id: modbus_bus
+            uart_id: modbus_uart
+            send_wait_time: 500ms
+
+          packages:
+            innova_board: !include packages/innova_n273025c.yaml
+          EOF
+          esphome config test_n273025c.yaml
+
+      - name: Compile ESP-IDF C++ Target (Smoke Test)
+        run: |
+          esphome compile test_n273025d.yaml
