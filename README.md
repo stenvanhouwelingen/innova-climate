@@ -1,5 +1,10 @@
 # ESPHome Innova Fancoil Integration (M7/PU)
 
+[![ESPHome CI](https://github.com/stenvanhouwelingen/innova-climate/actions/workflows/ci.yaml/badge.svg)](https://github.com/stenvanhouwelingen/innova-climate/actions/workflows/ci.yaml)
+[![GitHub Release](https://img.shields.io/github/v/release/stenvanhouwelingen/innova-climate?color=blue)](https://github.com/stenvanhouwelingen/innova-climate/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitHub Wiki](https://img.shields.io/badge/docs-Wiki-brightgreen.svg)](docs/wiki/Home.md)
+
 This repository contains an ESPHome configuration and a custom C++ component to integrate **Innova fancoils** using **PU / on-board control** or **M7** series boards with Home Assistant via Modbus RTU (RS-485) using an **M5Stack Atom Lite** or **M5Stack NanoC6** and an **M5Stack RS485 Unit**.
 
 The integration runs all climate control logic locally on the ESP32/ESP32-C6. It exposes a native Home Assistant `climate` entity, a local browser-based web panel, diagnostic sensors, and configuration entities.
