@@ -4,6 +4,9 @@ This repository contains an ESPHome configuration and a custom C++ component to 
 
 The integration runs all climate control logic locally on the ESP32/ESP32-C6. It exposes a native Home Assistant `climate` entity, a local browser-based web panel, diagnostic sensors, and configuration entities.
 
+> 📖 **Looking for in-depth technical documentation on fancoil mechanics, sensors, and low-temp heat pump operation?**  
+> Check out the **[Innova Fancoil Technical Knowledge Base & Wiki](docs/wiki/Home.md)**!
+
 ---
 
 ## Supported Fancoil Models & Board Topologies
