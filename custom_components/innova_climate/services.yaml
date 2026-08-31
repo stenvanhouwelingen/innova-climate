@@ -2,7 +2,9 @@ set_supervisor_mode:
   name: Set Remote Supervisor Mode
   description: Enable or disable supervisor mode, locking local on-board panel control.
   target:
-    device:
+    entity:
+      domain: climate
+      integration: innova_climate
   fields:
     enabled:
       name: Enabled
@@ -15,7 +17,9 @@ set_room_temperature_offset:
   name: Set Room Temperature Calibration Offset
   description: Set the calibration offset for the T1 room temperature sensor.
   target:
-    device:
+    entity:
+      domain: climate
+      integration: innova_climate
   fields:
     offset:
       name: Offset
@@ -32,7 +36,9 @@ set_keypad_lock:
   name: Set Keypad Lock
   description: Lock or unlock the physical on-board touch screen.
   target:
-    device:
+    entity:
+      domain: climate
+      integration: innova_climate
   fields:
     locked:
       name: Locked
