@@ -8,11 +8,11 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/stenvanhouwelingen/innova-climate/issues",
   "requirements": ["pymodbus>=3.6.0", "pyserial>=3.5"],
+  "version": "1.0.0",
   "zeroconf": [
     {
       "type": "_esphomelib._tcp.local.",
       "name": "innova*"
     }
-  ],
-  "version": "1.0.0"
+  ]
 }

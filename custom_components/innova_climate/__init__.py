@@ -42,6 +42,8 @@ ATTR_ENABLED = "enabled"
 ATTR_OFFSET = "offset"
 ATTR_LOCKED = "locked"
 
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
 
 class AsyncModbusClientWrapper:
     """Wrapper to bridge pymodbus / serialx async clients with innova_modbus."""

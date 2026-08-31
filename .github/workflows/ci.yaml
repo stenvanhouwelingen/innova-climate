@@ -81,6 +81,7 @@ jobs:
           api_key: "EmdRegYL+GFqTKUoFf31L6hB+P/W3sOkprv1hZNBo04="
           ota_password: "TestPassword123"
           EOF
+          cp secrets.yaml examples/secrets.yaml
 
       - name: Validate M5Stack NanoC6 Serial Proxy (ESP32-C6)
         run: |

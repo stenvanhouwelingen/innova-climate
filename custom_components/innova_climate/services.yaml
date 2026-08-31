@@ -3,7 +3,6 @@ set_supervisor_mode:
   description: Enable or disable supervisor mode, locking local on-board panel control.
   target:
     device:
-      integration: innova_climate
   fields:
     enabled:
       name: Enabled
@@ -17,7 +16,6 @@ set_room_temperature_offset:
   description: Set the calibration offset for the T1 room temperature sensor.
   target:
     device:
-      integration: innova_climate
   fields:
     offset:
       name: Offset
@@ -35,7 +33,6 @@ set_keypad_lock:
   description: Lock or unlock the physical on-board touch screen.
   target:
     device:
-      integration: innova_climate
   fields:
     locked:
       name: Locked
