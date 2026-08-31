@@ -1,10 +1,21 @@
 # Gitignore settings for ESPHome
-# You can modify this file to suit your needs.
-/.esphome/
-/secrets.yaml
-.DS_Store
-__pycache__
-M7-PU.Innova-Modbus_quick_ref_20240503.pdf
+# Build and temporary files
+**/.esphome/
+**/secrets.yaml
+
+# OS and IDE files
+**/.DS_Store
+.vscode/
+.idea/
+
+# Python cache & tooling
+**/__pycache__/
+**/*.py[cod]
+*$py.class
+**/.ruff_cache/
+**/.pytest_cache/
+
+# Local reference manuals and scratch artifacts
 *.pdf
 manuals/
 scratch/

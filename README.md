@@ -245,8 +245,8 @@ The local ESP32 runs a web server. If Home Assistant is ever down, you can contr
 
 ---
 
-## Liability Disclosure
+## Liability Disclosure & Disclaimer
 
-**Disclaimer**: This integration is an independent open-source project and is not affiliated with, authorized, maintained, sponsored, or endorsed by Innova S.r.l. or any of its affiliates or partners.
-
-Modbus communication involves reading and writing directly to the fancoil controller's registers. While this configuration is designed to be safe and complies with official documentation, writing invalid configurations or registers can potentially impact your fancoil's operation. Use this software entirely **at your own risk**. The authors and contributors assume no liability and are not responsible for any damage to your hardware, property, or heating/cooling systems caused by the use of this integration.
+* **Independent Project**: This integration is an independent open-source project and is not affiliated with, authorized, maintained, sponsored, or endorsed by Innova S.r.l. or any of its affiliates or partners.
+* **Risk & Liability**: Modbus communication involves reading and writing directly to the fancoil controller's registers. While this configuration is designed to be safe and complies with official documentation, writing invalid configurations or registers can potentially impact your fancoil's operation. Use this software entirely **at your own risk**. The authors and contributors assume no liability and are not responsible for any damage to your hardware, property, or heating/cooling systems caused by the use of this integration.
+* **AI Assistance Notice**: This project, its codebase, and technical documentation have been developed with the assistance of artificial intelligence (AI) pair programming alongside manual research, reverse engineering, and real-world hardware verification. Always review and verify settings against your specific hardware manuals before commissioning.
