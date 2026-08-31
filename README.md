@@ -112,7 +112,9 @@ PYTHONPATH=innova_modbus/src pytest innova_modbus/tests -v
 
 ---
 
-## 📄 License & Disclaimer
+## 📄 License, Liability Disclaimer & AI Notice
 
 * **License**: Released under the [MIT License](LICENSE).
-* **Disclaimer**: This integration is an independent open-source project and is not affiliated with, authorized, maintained, sponsored, or endorsed by Innova S.r.l.
+* **Independent Project**: This integration is an independent open-source project and is not affiliated with, authorized, maintained, sponsored, or endorsed by Innova S.r.l. or any of its subsidiaries or affiliates.
+* **Risk & Liability Disclaimer**: Modbus communication involves reading and writing directly to the fancoil controller's holding registers. While this integration is designed to be safe and follows manufacturer specifications, modifying hardware configurations or registers can potentially impact your fancoil's operation. Use this software entirely **at your own risk**. The authors and contributors assume no liability and are not responsible for any damage to your hardware, property, or heating/cooling systems caused by the use of this software.
+* **AI Assistance Notice**: This project, its codebase, register decoders, and technical documentation have been developed with the assistance of artificial intelligence (AI) pair programming tools alongside manual research, engineering, and real-world hardware verification. Always review and verify settings against your specific installation and manufacturer manuals before commissioning.
