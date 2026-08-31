@@ -1,0 +1,159 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Innova Fancoil Connection Type",
+        "description": "Choose how to connect to your Innova fancoil controller.",
+        "data": {
+          "connection_type": "Connection Type"
+        }
+      },
+      "serial": {
+        "title": "Serial / ESPHome Proxy Settings",
+        "description": "Configure the serial port (ESPHome serial proxy or USB RS-485 transceiver) and Modbus slave ID.",
+        "data": {
+          "serial_port": "Serial Port / ESPHome Proxy",
+          "baudrate": "Baud Rate",
+          "slave_id": "Modbus Slave Address (ID)",
+          "board_family": "Innova Board Family"
+        }
+      },
+      "tcp": {
+        "title": "Modbus TCP Gateway Settings",
+        "description": "Configure the IP address / hostname and port of your Modbus TCP bridge.",
+        "data": {
+          "host": "Host / IP Address",
+          "port": "Port",
+          "slave_id": "Modbus Slave Address (ID)",
+          "board_family": "Innova Board Family"
+        }
+      },
+      "discovery_confirm": {
+        "title": "Innova Fancoil Discovered",
+        "description": "Configure the network bridge connection for {name}.",
+        "data": {
+          "host": "Host / IP Address",
+          "port": "Port",
+          "slave_id": "Modbus Slave Address (ID)",
+          "board_family": "Innova Board Family"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the Modbus device. Please verify wiring, polarity (A/B), and slave address.",
+      "unknown": "Unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "This Innova Fancoil device is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Innova Fancoil Options",
+        "data": {
+          "scan_interval": "Polling Interval (seconds)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "climate": {
+      "thermostat": {
+        "name": "Thermostat"
+      }
+    },
+    "sensor": {
+      "inlet_water_temperature": {
+        "name": "Inlet Water Temperature (T2)"
+      },
+      "coil_water_temperature": {
+        "name": "Coil Water Temperature (T3)"
+      },
+      "relative_humidity": {
+        "name": "Relative Humidity"
+      },
+      "alarm_description": {
+        "name": "Diagnostics"
+      },
+      "status_description": {
+        "name": "Operating Status"
+      },
+      "fan_status_description": {
+        "name": "Fan Status"
+      },
+      "firmware_release": {
+        "name": "Firmware Version"
+      }
+    },
+    "binary_sensor": {
+      "alarm_status": {
+        "name": "Alarm Status"
+      },
+      "window_contact": {
+        "name": "Window Contact (IN1)"
+      },
+      "inlet_water_probe_connected": {
+        "name": "Inlet Water Probe (T2) Connected"
+      },
+      "coil_water_probe_connected": {
+        "name": "Coil Water Probe (T3) Connected"
+      }
+    },
+    "switch": {
+      "supervisor_mode": {
+        "name": "Remote Supervisor Mode"
+      },
+      "keypad_lock": {
+        "name": "Keypad Lock"
+      },
+      "flap_swing": {
+        "name": "Flap Swing"
+      }
+    },
+    "select": {
+      "fan_speed_select": {
+        "name": "Fan Speed"
+      },
+      "seasonal_mode_select": {
+        "name": "Seasonal Mode"
+      }
+    },
+    "number": {
+      "t1_sensor_offset": {
+        "name": "Room Temperature Offset"
+      }
+    },
+    "button": {
+      "force_refresh": {
+        "name": "Refresh Data"
+      }
+    },
+    "event": {
+      "alarm_event": {
+        "name": "Alarm / Event Notifications",
+        "state_attributes": {
+          "event_type": {
+            "name": "Event Type",
+            "state": {
+              "alarm": "Alarm Triggered",
+              "alarm_cleared": "Alarm Cleared",
+              "filter_cleaning_required": "Filter Cleaning Required",
+              "window_opened": "Window Opened",
+              "window_closed": "Window Closed"
+            }
+          }
+        }
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "alarm": "Innova Fancoil alarm triggered",
+      "alarm_cleared": "Innova Fancoil alarm cleared",
+      "filter_cleaning_required": "Innova Fancoil air filter maintenance required",
+      "window_opened": "Innova Fancoil window contact opened",
+      "window_closed": "Innova Fancoil window contact closed"
+    }
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "entity": {
+    "sensor": {
+      "inlet_water_temperature": {
+        "default": "mdi:coolant-temperature"
+      },
+      "coil_water_temperature": {
+        "default": "mdi:heat-wave"
+      },
+      "relative_humidity": {
+        "default": "mdi:water-percent"
+      },
+      "alarm_description": {
+        "default": "mdi:alert-circle-outline"
+      },
+      "status_description": {
+        "default": "mdi:information-outline"
+      },
+      "fan_status_description": {
+        "default": "mdi:fan"
+      },
+      "firmware_release": {
+        "default": "mdi:chip"
+      }
+    },
+    "binary_sensor": {
+      "alarm_status": {
+        "default": "mdi:alert-octagon"
+      },
+      "window_contact": {
+        "default": "mdi:window-closed",
+        "state": {
+          "on": "mdi:window-open",
+          "off": "mdi:window-closed"
+        }
+      },
+      "inlet_water_probe_connected": {
+        "default": "mdi:thermometer-check"
+      },
+      "coil_water_probe_connected": {
+        "default": "mdi:thermometer-check"
+      }
+    },
+    "switch": {
+      "supervisor_mode": {
+        "default": "mdi:shield-account"
+      },
+      "keypad_lock": {
+        "default": "mdi:lock",
+        "state": {
+          "on": "mdi:lock",
+          "off": "mdi:lock-open"
+        }
+      },
+      "flap_swing": {
+        "default": "mdi:weather-windy"
+      }
+    },
+    "select": {
+      "fan_speed_select": {
+        "default": "mdi:fan"
+      },
+      "seasonal_mode_select": {
+        "default": "mdi:sun-snowflake"
+      }
+    },
+    "number": {
+      "t1_sensor_offset": {
+        "default": "mdi:thermometer-lines"
+      }
+    },
+    "button": {
+      "force_refresh": {
+        "default": "mdi:refresh"
+      }
+    },
+    "event": {
+      "alarm_event": {
+        "default": "mdi:bell-alert"
+      }
+    }
+  }
+}

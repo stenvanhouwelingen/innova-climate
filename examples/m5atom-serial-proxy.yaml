@@ -1,0 +1,81 @@
+substitutions:
+  name: "innova-atom-serial-proxy"
+  friendly_name: "Innova Atom Serial Proxy"
+
+esphome:
+  name: "${name}"
+  friendly_name: "${friendly_name}"
+  min_version: 2026.8.0
+  name_add_mac_suffix: true
+  project:
+    name: "stenvanhouwelingen.innova-serial-proxy-atom"
+    version: "1.0.0"
+
+esp32:
+  board: m5stack-atom
+  framework:
+    type: esp-idf
+
+logger:
+  level: INFO
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  ap:
+    ssid: "Atom Proxy Fallback"
+    password: !secret fallback_ap_password
+
+captive_portal:
+
+# =========================================================================
+# BLUETOOTH PROXY & TRACKER (ESP32 BLE)
+# =========================================================================
+esp32_ble_tracker:
+  scan_parameters:
+    interval: 1100ms
+    window: 1100ms
+    active: true
+
+bluetooth_proxy:
+  active: true
+
+# =========================================================================
+# UART CONFIGURATION (M5Stack Atom Grove Port: TX=26, RX=32)
+# =========================================================================
+uart:
+  id: modbus_uart
+  tx_pin: 26
+  rx_pin:
+    number: 32
+    mode: INPUT_PULLUP
+  baud_rate: 9600
+  stop_bits: 1
+  rx_timeout: 10
+
+# =========================================================================
+# DUAL-MODE MODBUS BRIDGE:
+# 1. Direct TCP Socket Stream Server on Port 8899 (Modbus RTU-over-TCP)
+# 2. Native ESPHome Serial Proxy over API
+# =========================================================================
+external_components:
+  - source: github://oxan/esphome-stream-server
+    components: [stream_server]
+
+stream_server:
+  uart_id: modbus_uart
+  port: 8899
+
+serial_proxy:
+  - name: "Innova Fancoil Serial Port"
+    port_type: RS485
+    uart_id: modbus_uart

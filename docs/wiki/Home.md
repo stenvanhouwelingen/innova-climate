@@ -42,3 +42,8 @@ Welcome to the **Innova Fancoil Technical Knowledge Base**. This documentation c
    * Status Register 150 bitmask table.
    * Alarm Register 151 bitmask table.
    * Web control / lock Register 557 bitmask table.
+
+8. [**Chapter 8: Home Assistant Integration Guide**](08_home_assistant_integration_guide.md)
+   * Installation via HACS or manual copy.
+   * Modbus TCP / ESPHome Bridge setup.
+   * Entities, sensors, switches, and calibration numbers.

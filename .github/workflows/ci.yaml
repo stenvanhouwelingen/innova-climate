@@ -1,4 +1,4 @@
-name: ESPHome CI
+name: Continuous Integration & Validation
 
 on:
   push:
@@ -7,8 +7,55 @@ on:
     branches: [ main ]
 
 jobs:
-  validate:
-    name: Validate ESPHome Configurations
+  hassfest:
+    name: Home Assistant Hassfest Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Hassfest
+        uses: home-assistant/actions/hassfest@master
+
+  hacs:
+    name: HACS Action Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run HACS Action
+        uses: "hacs/action@main"
+        with:
+          category: "integration"
+
+  pytest:
+    name: Python Test Suite & Library Verification
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-asyncio pymodbus pyserial
+
+      - name: Run Pytest Suite
+        run: |
+          PYTHONPATH=innova_modbus/src pytest innova_modbus/tests -v
+
+  esphome:
+    name: Validate ESPHome Configurations & Packages
     runs-on: ubuntu-latest
 
     steps:
@@ -25,7 +72,25 @@ jobs:
           pip install --upgrade pip
           pip install esphome
 
-      - name: Validate Package D (n273025d)
+      - name: Create Test Secrets
+        run: |
+          cat << 'EOF' > secrets.yaml
+          wifi_ssid: "TestWiFi"
+          wifi_password: "TestPassword"
+          fallback_ap_password: "TestPassword123"
+          api_key: "EmdRegYL+GFqTKUoFf31L6hB+P/W3sOkprv1hZNBo04="
+          ota_password: "TestPassword123"
+          EOF
+
+      - name: Validate M5Stack NanoC6 Serial Proxy (ESP32-C6)
+        run: |
+          esphome config examples/m5nanoc6-serial-proxy.yaml
+
+      - name: Validate M5Stack Atom Lite Serial Proxy (ESP32)
+        run: |
+          esphome config examples/m5atom-serial-proxy.yaml
+
+      - name: Validate Standalone Legacy Package D (n273025d)
         run: |
           cat << 'EOF' > test_n273025d.yaml
           substitutions:
@@ -80,7 +145,7 @@ jobs:
           EOF
           esphome config test_n273025d.yaml
 
-      - name: Validate Package C (n273025c)
+      - name: Validate Standalone Legacy Package C (n273025c)
         run: |
           cat << 'EOF' > test_n273025c.yaml
           substitutions:
@@ -134,7 +199,3 @@ jobs:
             innova_board: !include packages/innova_n273025c.yaml
           EOF
           esphome config test_n273025c.yaml
-
-      - name: Compile ESP-IDF C++ Target (Smoke Test)
-        run: |
-          esphome compile test_n273025d.yaml

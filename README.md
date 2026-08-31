@@ -1,252 +1,118 @@
-# ESPHome Innova Fancoil Integration (M7/PU)
+# Innova Fancoil Climate Control for Home Assistant
 
-[![ESPHome CI](https://github.com/stenvanhouwelingen/innova-climate/actions/workflows/ci.yaml/badge.svg)](https://github.com/stenvanhouwelingen/innova-climate/actions/workflows/ci.yaml)
-[![GitHub Release](https://img.shields.io/github/v/release/stenvanhouwelingen/innova-climate?color=blue)](https://github.com/stenvanhouwelingen/innova-climate/releases)
+[![Home Assistant Integration](https://img.shields.io/badge/Home%20Assistant-Integration-blue.svg)](docs/wiki/08_home_assistant_integration_guide.md)
+[![HACS](https://img.shields.io/badge/HACS-Custom%20Integration-orange.svg)](custom_components/innova_climate)
+[![Continuous Integration](https://github.com/stenvanhouwelingen/innova-climate/actions/workflows/ci.yaml/badge.svg)](https://github.com/stenvanhouwelingen/innova-climate/actions/workflows/ci.yaml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![GitHub Wiki](https://img.shields.io/badge/docs-Wiki-brightgreen.svg)](docs/wiki/Home.md)
 
-This repository contains an ESPHome configuration and a custom C++ component to integrate **Innova fancoils** using **PU / on-board control** or **M7** series boards with Home Assistant via Modbus RTU (RS-485) using an **M5Stack Atom Lite** or **M5Stack NanoC6** and an **M5Stack RS485 Unit**.
+Modern, native Home Assistant integration and lightweight serial proxy firmware for the complete **Innova Electronics Fancoil Ecosystem** (**OSMO, AirLeaf, Filomuro, Filoterra, and FÄRNA**).
 
-The integration runs all climate control logic locally on the ESP32/ESP32-C6. It exposes a native Home Assistant `climate` entity, a local browser-based web panel, diagnostic sensors, and configuration entities.
-
-> 📖 **Looking for in-depth technical documentation on fancoil mechanics, sensors, and low-temp heat pump operation?**  
-> Check out the **[Innova Fancoil Technical Knowledge Base & Wiki](docs/wiki/Home.md)**!
-
----
-
-## Supported Fancoil Models & Board Topologies
+<p align="center">
+  <img src="custom_components/innova_climate/brand/icon@2x.png" width="160" alt="Innova Climate Logo">
+</p>
 
 > [!NOTE]  
-> **Tested & Verified**: This integration has been physically tested and verified on the **Innova OSMO Series** and **Innova AirLeaf Series** fancoils.
-> 
-> If you have successfully tested this integration on a different fancoil model, please let us know in the [Device Compatibility Category](https://github.com/stenvanhouwelingen/innova-climate/discussions/categories/device-compatibility) so we can update the list of verified hardware!
-
-This integration is fully compatible with all fancoil models equipped with **Innova Electronics' M7 or PU control boards** (firmware default ID `1190` or compatible). The repository supports both main Modbus register families using ESPHome packages:
-
-### 1. Board Family n273025d (Default/Newer)
-* **Compatible Board Numbers**: `ECA789`, `PUB-30`, `EEB749`, `ECA844`, `ECA044`
-* **Applicable Products**: Innova OSMO, AirLeaf, FÄRNA, and newer Filomuro versions.
-
-### 2. Board Family n273025c (Older/Bridge Retrofits)
-* **Compatible Board Numbers**: `INN-FR-B32` (Modbus bridge retrofit accessory card), `ECA644`, `ECA647`, `EDA649`, `EDB649`, `ESE645`, `ESE648`
-* **Applicable Products**: Innova Filoterra, and older built-in / Slim Fit versions of AirLeaf and Filomuro.
-
-### 3. Supported UI & Touchpads
-* **On-Board Touchscreens**: ECA844II / EWA844II (Wi-Fi), ECA044II / EWA044II (Wi-Fi)
-* **M7 Remote Wall Panels**: EEB749II (Standard) / EFB749II (Wi-Fi) / EGB749II (Bluetooth)
-* **Smart Touch Panels**: EEA649II / EEB649II / EFA649II / EFB649II
+> **Upgrading from the standalone ESPHome C++ Component?**  
+> Your existing setups and configurations continue to work seamlessly! The legacy packages (`packages/`) and C++ components (`components/`) remain fully supported in this repository. We recommend migrating to the new **HACS Custom Integration** to benefit from 1-click updates, zero microcontroller compilation overhead, and automatic hardware probe filtering. See **[Chapter 8: Home Assistant Integration Guide](docs/wiki/08_home_assistant_integration_guide.md)** for a simple 2-minute migration guide.
 
 ---
 
-## Hardware Requirements
+## 🌟 Highlights & Features
 
-1. **Innova-compatible Fancoil** (with PU on-board control or M7 wall control firmware).
-2. **ESPHome Controller**: An ESP32 microcontroller (pre-configured for the **M5Stack Atom Lite** or the **M5Stack NanoC6**). In theory, any ESPHome-supported microcontroller board (ESP32/ESP8266) capable of Modbus RTU serial communication can be used.
-3. **RS-485 Transceiver**: The **M5Stack RS485 Unit** (with automatic TX/RX direction switching built-in), or any standard RS-485 transceiver (such as MAX485).
-4. **Wiring & Hookup Wires** to connect the transceiver to the fancoil's Modbus terminals.
-
----
-
-## Wiring and Connections
-
-### 1. ESP32 to RS-485 Converter (M5Stack Grove Port)
-* Connect the M5Stack RS485 Unit to your ESP32's **Grove port** (Port A):
-  * **M5Stack Atom Lite**:
-    * **TX Pin (GPIO 26)** $\rightarrow$ RS485 Unit TX (Yellow Wire)
-    * **RX Pin (GPIO 32)** $\rightarrow$ RS485 Unit RX (White Wire)
-  * **M5Stack NanoC6**:
-    * **TX Pin (GPIO 2)** $\rightarrow$ RS485 Unit TX (Yellow Wire)
-    * **RX Pin (GPIO 1)** $\rightarrow$ RS485 Unit RX (White Wire)
-  * **Power / GND**:
-    * **5V Power** $\rightarrow$ RS485 Unit 5V (Red Wire)
-    * **GND** $\rightarrow$ RS485 Unit GND (Black Wire)
-
-> [!NOTE]  
-> The M5Stack RS485 Unit has built-in hardware automatic flow control. There is **no need** to configure an RTS or `de_pin` in ESPHome.
-
-### 2. RS-485 Converter to Innova Fancoil Board
-Connect the screw terminals of the RS485 Unit to the fancoil's Modbus port:
-1. **A** (Converter) $\rightarrow$ **B** (Fancoil Modbus B)
-2. **B** (Converter) $\rightarrow$ **A** (Fancoil Modbus A)
-3. **GND** (Converter) $\rightarrow$ **GND** (Fancoil Modbus GND / Shield)
-
-> [!WARNING]  
-> **Reversed A/B Pins / Swapped Connections**: The RS-485 transmission lines must be crossed (`A` to `B` and `B` to `A`) for communication to function correctly, as pin labels on many transceivers/controllers are reversed relative to standard conventions.
-> **Ground Shielding**: Connecting the common Ground (`GND`) terminal between the converter and the fancoil board is critical to prevent ground loops and communication noise.
+* 🚀 **Native Home Assistant Integration (`innova_climate`)**: Direct UI configuration with auto-discovery, thermostat entity, diagnostic sensors, and calibration controls.
+* ⚡ **Dual-Mode ESPHome Bridge (Port 8899)**: Lightweight ESPHome firmware for **M5Stack NanoC6** and **M5Stack Atom Lite** running Modbus RTU-over-TCP stream server + Bluetooth BLE Proxy.
+* 🐍 **Standalone `innova-modbus` Python Library**: Async Python library built for PyModbus 3.8–3.13+ with automated register family detection (`n273025d` modern & `n273025c` legacy).
+* 🌡️ **Smart Sensor Filtering**: Automatically hides unconnected hardware probes (e.g. T3 coil probe on 2-pipe systems or uninstalled relative humidity sensors).
+* 🔧 **Calibration & Diagnostics**: Real-time water temperatures (T2 inlet), room temperature calibration slider (-1.2 to +1.2 °C), physical keypad locks, and supervisor mode.
+* 📖 **Comprehensive Technical Wiki**: In-depth chapters on fancoil mechanics, sensor physics, heat pump low-temp heating curves, and Modbus register maps.
 
 ---
 
-## Modbus Protocol Specifications
+## 🗂️ Repository Structure
 
-* **Physical Layer**: RS-485
-* **Baud Rate**: `9600`
-* **Data Bits**: `8`
-* **Parity**: `None`
-* **Stop Bits**: `1`
-* **Default Slave Address**: `1`
-* **Crucial Timing Restriction**: The Innova board only supports a maximum of **3 registers** in a single Modbus read request. Reading 4 or more registers in a single request causes communication timeouts. This is prevented in the ESPHome configuration by using `force_new_range: true` to split register reads.
-
----
-
-## Modbus Register Map (PU Board)
-
-The following registers are mapped and queried in this configuration:
-
-| Register Address (Dec) | Type | Acronym | Description | Unit / Scale | Access |
-|:---:|:---:|:---:|:---|:---:|:---:|
-| **0** | Holding | `T_AIR` | Current Room Air Temperature | $0.1\ ^\circ\text{C}$ | R |
-| **1** | Holding | `T_WATER_2` | Water Temperature T2 (Inlet/Return Water) | $0.1\ ^\circ\text{C}$ | R |
-| **2** | Holding | `T_WATER_4` | Water Temperature T3 (Coil/Supply Water) | $0.1\ ^\circ\text{C}$ | R |
-| **20** | Holding | `RH` | Relative Humidity | $\%$ | R |
-| **150** | Holding | `Status` | Unit Status Bitmask (Heating/Cooling active, standby, fan stops) | Bitmask | R |
-| **151** | Holding | `Alarms` | Unit Alarms Bitmask (Sensor faults, motor failure, clean filter) | Bitmask | R |
-| **198** | Holding | `Release` | Firmware Release Version | $0.1$ | R |
-| **199** | Holding | `ID` | Firmware Identifier (PU Default is `1190`) | - | R |
-| **302** | Holding | `SPL_W` | WEB Minimum Setpoint Limit | $1\ ^\circ\text{C}$ | R/W |
-| **303** | Holding | `SPH_W` | WEB Maximum Setpoint Limit | $1\ ^\circ\text{C}$ | R/W |
-| **305** | Holding | `SP` | Target Air Temperature Setpoint | $0.1\ ^\circ\text{C}$ | R/W |
-| **457** | Holding | `FSW` | Flap Swing (Motorized Louvers) | - | R/W |
-| **530** | Holding | `OS1` | Room Temperature Calibration Offset | $0.1\ ^\circ\text{C}$ | R/W |
-| **553** | Holding | `PRG` | Program register: Fan Mode, Keypad Lock, Power Switch | Bitmask | R/W |
-| **556** | Holding | `MAN` | Season Selection: Auto (0), Heating (1), Cooling (2) | - | R/W |
-| **557** | Holding | `WEB` | Webserver Lockout Flags | Bitmask | R/W |
-
-### Detailed Bitmasks in Register `553` (Program)
-* **Bits [2-0] (Mode)**: `000` (0) = Auto, `001` (1) = Night/Silent, `010` (2) = Max/High
-* **Bit 3 (Lock)**: Keypad lock (`1` = locked, `0` = unlocked)
-* **Bit 4 (Stby)**: Standby state (`1` = standby/off, `0` = on)
-
----
-
-## Installation and Setup
-
-### Quick Start (ESPHome Web Dashboard)
-If you are using the ESPHome Dashboard (via the Home Assistant add-on or standalone), you can deploy this integration instantly without downloading any local files:
-1. Create a new device in your ESPHome Dashboard.
-2. Open the device's configuration editor, delete all default code, and copy-paste the entire content of [esphome-innova.yaml](esphome-innova.yaml) directly into the editor.
-3. Configure your secrets in your `secrets.yaml` file (see the configuration template below).
-4. Click **Install**. ESPHome will automatically pull the custom `innova_climate` component from GitHub, compile the firmware, and flash it to your ESP32 device!
-
----
-
-### Method A: Remote GitHub Import (Recommended)
-If you are creating your own configuration from scratch or using packages, you can import this component by pinning to an official release tag in your `external_components` and `packages` blocks:
-```yaml
-external_components:
-  - source:
-      type: git
-      url: https://github.com/stenvanhouwelingen/innova-climate
-      ref: 2026.8.18
-
-packages:
-  innova_board:
-    url: https://github.com/stenvanhouwelingen/innova-climate
-    ref: 2026.8.18
-    files: 
-      - packages/innova_n273025d.yaml
+```text
+├── custom_components/
+│   └── innova_climate/       # Home Assistant Custom Component (HACS)
+├── innova_modbus/            # Standalone Python device library & test suite
+├── examples/                 # ESPHome Serial & TCP Stream Server configs (NanoC6 / Atom Lite)
+├── docs/
+│   └── wiki/                 # Complete 12-Chapter Technical Wiki & Integration Guide
+└── hacs.json                 # HACS repository metadata
 ```
 
-> [!TIP]
-> **Production Best Practice: Version Pinning**  
-> We strongly recommend pinning to a specific release tag (e.g. `ref: 2026.8.18`) rather than `ref: main`.  
-> * **Why**: Pinning guarantees that your heating and cooling setup is 100% immutable and protected against unexpected changes. Your devices will never pull unreleased or untested commits during routine recompilations.  
-> * **How to Upgrade**: When a new version is released, simply bump the `ref:` string in your YAML to the new release tag.
+---
+
+## 🚀 Quick Start Guide
+
+### 1. Hardware Hookup (M5Stack Grove Port $\rightarrow$ Fancoil Modbus)
+
+Connect the **M5Stack RS-485 Unit** to your microcontroller's **Grove Port**:
+* **M5Stack Atom Lite**: TX = GPIO 26, RX = GPIO 32
+* **M5Stack NanoC6**: TX = GPIO 2, RX = GPIO 1
+
+Connect the RS-485 transceiver screw terminals to the fancoil PCB:
+* **A** (Transceiver) $\rightarrow$ **B** (Fancoil Modbus B)
+* **B** (Transceiver) $\rightarrow$ **A** (Fancoil Modbus A)
+* **GND** (Transceiver) $\rightarrow$ **GND** (Fancoil Modbus Shield / GND)
+
+> [!IMPORTANT]
+> The RS-485 transmission lines must be crossed (`A` to `B` and `B` to `A`) for communication to function properly.
 
 ---
 
-### Method B: Local Installation (Manual Download)
-If you prefer to host and edit the component files locally on your ESPHome machine:
+### 2. Flash the ESPHome Firmware
 
-1. Clone or download this repository, and copy the `components` folder into your ESPHome configuration directory:
-   ```text
-   your-esphome-folder/
-   ├── esphome-innova.yaml
-   ├── secrets.yaml
-   └── components/
-       └── innova_climate/
-           ├── __init__.py
-           ├── climate.py
-           └── innova_climate.h
-   ```
-
-2. Open your `esphome-innova.yaml`, and change the `external_components` block to point to your local components directory instead of the GitHub repository:
-   ```yaml
-   external_components:
-     - source:
-         type: local
-         path: components
-   ```
+1. Create your `secrets.yaml` containing your Wi-Fi credentials (see `secrets.yaml.example`).
+2. Flash your device via USB or OTA:
+   * **For M5Stack NanoC6** (ESP32-C6):
+     ```bash
+     esphome run examples/m5nanoc6-serial-proxy.yaml
+     ```
+   * **For M5Stack Atom Lite** (ESP32):
+     ```bash
+     esphome run examples/m5atom-serial-proxy.yaml
+     ```
 
 ---
 
-### 2. Configure `secrets.yaml`
-Create a `secrets.yaml` file containing your Wi-Fi credentials and security keys:
-```yaml
-wifi_ssid: "Your_WiFi_SSID"
-wifi_password: "Your_WiFi_Password"
+### 3. Install in Home Assistant via HACS
 
-# Security keys for ESPHome best practices
-api_key: "your_base64_api_key_here"
-ota_password: "your_ota_password_here"
-fallback_ap_password: "your_fallback_password_here"
-```
+1. In Home Assistant, open **HACS** $\rightarrow$ **Integrations** $\rightarrow$ **Custom repositories**.
+2. Add `https://github.com/stenvanhouwelingen/innova-climate` with category **Integration**.
+3. Click **Download**, then restart Home Assistant.
+4. Go to **Settings** $\rightarrow$ **Devices & Services** $\rightarrow$ **Add Integration** $\rightarrow$ Search **Innova Fancoil Climate Control**.
+5. Enter the IP address of your ESP32 device on port `8899` (default).
 
-### 3. Compile and Upload
-Ensure the ESP32 is connected to your machine or is available on the network for OTA updates, and run:
+👉 For complete setup instructions, read **[Chapter 8: Home Assistant Integration Guide](docs/wiki/08_home_assistant_integration_guide.md)**.
+
+---
+
+## 📚 Technical Wiki & Documentation
+
+Explore the **[Innova Fancoil Technical Knowledge Base](docs/wiki/Home.md)**:
+
+1. [Chapter 1: Overview & Model Variants](docs/wiki/01_overview_and_models.md)
+2. [Chapter 2: Internal Workings & Control Physics](docs/wiki/02_internal_workings_and_physics.md)
+3. [Chapter 3: Sensors & Standalone Operation](docs/wiki/03_sensors_and_standalone_operation.md)
+4. [Chapter 4: Heat Pumps & Low-Temperature Heating ($< 30^\circ\text{C}$ Water)](docs/wiki/04_heat_pumps_and_low_temp_heating.md)
+5. [Chapter 5: Control Boards & DIP Switch Configurations](docs/wiki/05_control_boards_and_dip_switches.md)
+6. [Chapter 6: Remote Supervisor Mode](docs/wiki/06_remote_supervisor_mode.md)
+7. [Chapter 7: Modbus Register Deep Dive & Bitmasks](docs/wiki/07_modbus_register_deep_dive.md)
+8. [Chapter 8: Home Assistant Integration Guide](docs/wiki/08_home_assistant_integration_guide.md)
+
+---
+
+## 🧪 Testing & Validation
+
+Run the standalone unit test suite locally:
 ```bash
-esphome run esphome-innova.yaml
+PYTHONPATH=innova_modbus/src pytest innova_modbus/tests -v
 ```
 
 ---
 
-## Home Assistant Integration
+## 📄 License & Disclaimer
 
-Once the device is flashed and connected to Wi-Fi, it will be automatically discovered by Home Assistant's native **ESPHome integration**:
-
-1. In Home Assistant, navigate to **Settings** $\rightarrow$ **Devices & Services**.
-2. Under the discovered integrations, locate **Innova Bedroom** (or your designated room name) and click **Configure**.
-3. Confirm the configuration. If prompted, input the API encryption key (configured as `api_key` in your `secrets.yaml`).
-4. The following entities will become available:
-   * **Climate Entity**: `climate.innova_bedroom_thermostat` (provides Mode, Setpoint, Fan Speed controls, and active heating/cooling action states).
-   * **Flap Swing Switch**: `switch.innova_bedroom_flap_swing` (toggles motorized air louver oscillation for high-wall Filomuro units).
-   * **Window Contact Sensor**: `binary_sensor.innova_bedroom_window_contact_in1` (indicates when the fancoil is paused via the `IN1` contact).
-   * **Sensors**: Water Temperatures ($T_2, T_3$), Relative Humidity ($0.1\%$ filtered), Wi-Fi Signal, and Device Uptime.
-   * **Diagnostic Text Sensors**: Fully decoded, human-readable status description and alarm code reporting.
-   * **Configuration Numbers**: Temp Calibration Offset, Min Water Limit Heating, Max Water Limit Cooling.
-   * **Configuration Switches**: Local Keypad Lock, Force Off, and Webserver lockout controls.
-
----
-
-## Local Web Control Panel
-
-The local ESP32 runs a web server. If Home Assistant is ever down, you can control the unit directly from any device on your Wi-Fi network:
-
-1. Open your browser and navigate to `http://innova-<room_name>.local/` (or your device's IP address).
-2. The page displays real-time readings, current setpoint, and allows adjusting the thermostat mode, setpoint, and fan speed.
-3. You can also view logs and update firmware (OTA) directly through this local portal.
-
----
-
-## Troubleshooting & Customization
-
-* **Device Times Out / No Data**: 
-  * Ensure you have physically crossed the RS-485 `A` and `B` wires (swapping A and B is the most common cause of timeouts).
-  * **DIP Switch Settings (Enable Modbus RTU)**:
-    * **PU / PUB-30 boards**: Ensure on-board DIP switch **`F`** is set to **`ON`** at power-on.
-    * **ES690II / 6-DIP switch boards (Smart Touch / SWI series)**: Set **DIP switch `6`** to **`ON`** before applying power to switch the communication port to Modbus RTU.
-* **Standalone Operation (Without Wall Thermostat Panel)**:
-  * When operating the fancoil standalone via ESPHome without an official Innova wall panel, connect a standard **10 kΩ NTC probe** to the **`T1` / `AIR`** terminals on the PCB so the unit can read ambient room temperature. Alternatively, use Remote Supervisor Mode (Register `102`) to transmit external temperatures.
-* **Low-Temperature Heating Loops ($< 30^\circ\text{C}$ Water / Heat Pumps)**:
-  * By default, the fancoil enforces a minimum water temperature check (30 °C) before running the fan in heating mode.
-  * **PU Series boards (`n273025d`)**: Disconnect the **$T_2$ (Inlet Water)** temperature sensor from the PCB. Wait at least 1 minute and power on the fancoil. The board will detect the missing probe and permanently bypass the 30 °C heating interlock.
-  * **Bridge / Older boards (`n273025c`)**: Adjust the *Minimum Water Temperature for Heating* (Register `218` / `LLO`) down to your desired threshold via Home Assistant.
-* **Firmware Mismatch**: This configuration is verified on the **PU (on-board control)** boards with firmware ID `1190`. If your unit has a wall panel and registers different responses, check if it uses the **M7** register set.
-* **Humidity Setpoint (Register 312)**: Some newer units do not support Register 312. If you see Modbus Exception code `2` (Illegal Data Address), this register has been omitted in this configuration to preserve loop speed.
-
----
-
-## Liability Disclosure & Disclaimer
-
-* **Independent Project**: This integration is an independent open-source project and is not affiliated with, authorized, maintained, sponsored, or endorsed by Innova S.r.l. or any of its affiliates or partners.
-* **Risk & Liability**: Modbus communication involves reading and writing directly to the fancoil controller's registers. While this configuration is designed to be safe and complies with official documentation, writing invalid configurations or registers can potentially impact your fancoil's operation. Use this software entirely **at your own risk**. The authors and contributors assume no liability and are not responsible for any damage to your hardware, property, or heating/cooling systems caused by the use of this integration.
-* **AI Assistance Notice**: This project, its codebase, and technical documentation have been developed with the assistance of artificial intelligence (AI) pair programming alongside manual research, reverse engineering, and real-world hardware verification. Always review and verify settings against your specific hardware manuals before commissioning.
+* **License**: Released under the [MIT License](LICENSE).
+* **Disclaimer**: This integration is an independent open-source project and is not affiliated with, authorized, maintained, sponsored, or endorsed by Innova S.r.l.

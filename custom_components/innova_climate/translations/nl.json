@@ -1,0 +1,159 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Innova Fancoil Verbindingstype",
+        "description": "Kies hoe je verbinding wilt maken met de Innova fancoil controller.",
+        "data": {
+          "connection_type": "Verbindingstype"
+        }
+      },
+      "serial": {
+        "title": "Seriële poort / ESPHome Proxy Instellingen",
+        "description": "Configureer de seriële poort (ESPHome serial proxy of USB RS-485 transceiver) en het Modbus slave-adres.",
+        "data": {
+          "serial_port": "Seriële poort / ESPHome Proxy",
+          "baudrate": "Baudrate",
+          "slave_id": "Modbus Slave-adres (ID)",
+          "board_family": "Innova Modelreeks / Printplaat"
+        }
+      },
+      "tcp": {
+        "title": "Modbus TCP Gateway Instellingen",
+        "description": "Configureer het IP-adres / hostnaam en de poort van de Modbus TCP gateway.",
+        "data": {
+          "host": "Host / IP-adres",
+          "port": "Poort",
+          "slave_id": "Modbus Slave-adres (ID)",
+          "board_family": "Innova Modelreeks / Printplaat"
+        }
+      },
+      "discovery_confirm": {
+        "title": "Innova Fancoil Gevonden",
+        "description": "Configureer de netwerkbridge verbinding voor {name}.",
+        "data": {
+          "host": "Host / IP-adres",
+          "port": "Poort",
+          "slave_id": "Modbus Slave-adres (ID)",
+          "board_family": "Innova Modelreeks / Printplaat"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan geen verbinding maken met het Modbus-apparaat. Controleer de bekabeling, polariteit (A/B) en het slave-adres.",
+      "unknown": "Onverwachte fout opgetreden."
+    },
+    "abort": {
+      "already_configured": "Dit Innova Fancoil apparaat is al geconfigureerd."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Innova Fancoil Opties",
+        "data": {
+          "scan_interval": "Update-interval (seconden)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "climate": {
+      "thermostat": {
+        "name": "Thermostaat"
+      }
+    },
+    "sensor": {
+      "inlet_water_temperature": {
+        "name": "Inlaatwatertemperatuur (T2)"
+      },
+      "coil_water_temperature": {
+        "name": "Warmtewisselaar watertemperatuur (T3)"
+      },
+      "relative_humidity": {
+        "name": "Luchtvochtigheid"
+      },
+      "alarm_description": {
+        "name": "Diagnostiek"
+      },
+      "status_description": {
+        "name": "Bedrijfsstatus"
+      },
+      "fan_status_description": {
+        "name": "Ventilatorstatus"
+      },
+      "firmware_release": {
+        "name": "Firmwareversie"
+      }
+    },
+    "binary_sensor": {
+      "alarm_status": {
+        "name": "Alarmstatus"
+      },
+      "window_contact": {
+        "name": "Raamcontact (IN1)"
+      },
+      "inlet_water_probe_connected": {
+        "name": "Inlaatwatersensor (T2) aangesloten"
+      },
+      "coil_water_probe_connected": {
+        "name": "Wisselaarwatersensor (T3) aangesloten"
+      }
+    },
+    "switch": {
+      "supervisor_mode": {
+        "name": "Supervisor-modus"
+      },
+      "keypad_lock": {
+        "name": "Toetsvergrendeling"
+      },
+      "flap_swing": {
+        "name": "Lamel zwenkfunctie"
+      }
+    },
+    "select": {
+      "fan_speed_select": {
+        "name": "Ventilatorsnelheid"
+      },
+      "seasonal_mode_select": {
+        "name": "Bedrijfsmodus"
+      }
+    },
+    "number": {
+      "t1_sensor_offset": {
+        "name": "Kamertemperatuur Kalibratie-offset"
+      }
+    },
+    "button": {
+      "force_refresh": {
+        "name": "Gegevens Vernieuwen"
+      }
+    },
+    "event": {
+      "alarm_event": {
+        "name": "Alarm- en Gebeurtenismeldingen",
+        "state_attributes": {
+          "event_type": {
+            "name": "Type Gebeurtenis",
+            "state": {
+              "alarm": "Alarm Geactiveerd",
+              "alarm_cleared": "Alarm Gewist",
+              "filter_cleaning_required": "Luchtfilter Reiniging Vereist",
+              "window_opened": "Raam Geopend",
+              "window_closed": "Raam Gesloten"
+            }
+          }
+        }
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "alarm": "Innova Fancoil alarm geactiveerd",
+      "alarm_cleared": "Innova Fancoil alarm gewist",
+      "filter_cleaning_required": "Innova Fancoil filterreiniging vereist",
+      "window_opened": "Innova Fancoil raamcontact geopend",
+      "window_closed": "Innova Fancoil raamcontact gesloten"
+    }
+  }
+}

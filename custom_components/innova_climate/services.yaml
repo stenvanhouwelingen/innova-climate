@@ -1,0 +1,45 @@
+set_supervisor_mode:
+  name: Set Remote Supervisor Mode
+  description: Enable or disable supervisor mode, locking local on-board panel control.
+  target:
+    device:
+      integration: innova_climate
+  fields:
+    enabled:
+      name: Enabled
+      description: Whether remote supervisor mode should be enabled (true) or disabled (false).
+      required: true
+      selector:
+        boolean:
+
+set_room_temperature_offset:
+  name: Set Room Temperature Calibration Offset
+  description: Set the calibration offset for the T1 room temperature sensor.
+  target:
+    device:
+      integration: innova_climate
+  fields:
+    offset:
+      name: Offset
+      description: Temperature calibration offset in Celsius (-1.2 to +1.2 °C).
+      required: true
+      selector:
+        number:
+          min: -1.2
+          max: 1.2
+          step: 0.1
+          unit_of_measurement: "°C"
+
+set_keypad_lock:
+  name: Set Keypad Lock
+  description: Lock or unlock the physical on-board touch screen.
+  target:
+    device:
+      integration: innova_climate
+  fields:
+    locked:
+      name: Locked
+      description: Whether the physical touch keypad should be locked (true) or unlocked (false).
+      required: true
+      selector:
+        boolean:

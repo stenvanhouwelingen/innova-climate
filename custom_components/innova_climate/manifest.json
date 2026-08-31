@@ -1,0 +1,18 @@
+{
+  "domain": "innova_climate",
+  "name": "Innova Fancoil Climate Control",
+  "codeowners": ["@stenvanhouwelingen"],
+  "config_flow": true,
+  "documentation": "https://github.com/stenvanhouwelingen/innova-climate",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/stenvanhouwelingen/innova-climate/issues",
+  "requirements": ["pymodbus>=3.6.0", "pyserial>=3.5"],
+  "zeroconf": [
+    {
+      "type": "_esphomelib._tcp.local.",
+      "name": "innova*"
+    }
+  ],
+  "version": "1.0.0"
+}

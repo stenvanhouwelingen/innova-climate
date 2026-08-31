@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "innova-modbus"
+version = "0.1.0"
+description = "Standalone asynchronous Python library for Innova Fancoils over Modbus RTU / TCP"
+readme = "README.md"
+authors = [
+  { name = "Sten van Houwelingen" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.12"
+dependencies = [
+  "modbus-connection>=0.1.0",
+  "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0.0",
+  "pytest-asyncio>=0.23.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
