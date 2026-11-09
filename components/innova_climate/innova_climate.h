@@ -55,13 +55,12 @@ class InnovaClimate : public climate::Climate, public Component {
    void setup() override {
      if (sensor_temp) {
        sensor_temp->add_on_state_callback([this](float state) {
-         if (!std::isnan(state)) {
-           // Validate temperature: values below -30C or above 80C indicate sensor fault
-           float validated_temp = (state < -30.0f || state > 80.0f) ? NAN : state;
-           if (this->current_temperature != validated_temp) {
-             this->current_temperature = validated_temp;
-             this->publish_state();
-           }
+         // Validate temperature: values at/below -30C, above 80C, or NAN indicate sensor fault
+         float validated_temp = (std::isnan(state) || state <= -30.0f || state > 80.0f) ? NAN : state;
+         bool both_nan = std::isnan(this->current_temperature) && std::isnan(validated_temp);
+         if (!both_nan && this->current_temperature != validated_temp) {
+           this->current_temperature = validated_temp;
+           this->publish_state();
          }
        });
      }
@@ -205,10 +204,13 @@ class InnovaClimate : public climate::Climate, public Component {
      } else if (this->sensor_status && !std::isnan(this->sensor_status->state)) {
        int status = (int) this->sensor_status->state;
        climate::ClimateAction new_action = climate::CLIMATE_ACTION_IDLE;
-       if (status & (1 << 0)) {
-         new_action = climate::CLIMATE_ACTION_COOLING;
-       } else if (status & (1 << 1)) {
-         new_action = climate::CLIMATE_ACTION_HEATING;
+       // Only report HEATING/COOLING if fan-stop water bits (bits 2..4) are not active
+       if ((status & 0x001C) == 0) {
+         if (status & (1 << 0)) {
+           new_action = climate::CLIMATE_ACTION_COOLING;
+         } else if (status & (1 << 1)) {
+           new_action = climate::CLIMATE_ACTION_HEATING;
+         }
        }
        if (this->action != new_action) {
          this->action = new_action;

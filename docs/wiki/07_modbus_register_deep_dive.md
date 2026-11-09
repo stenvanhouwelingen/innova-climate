@@ -18,7 +18,9 @@ This reference contains the complete holding register map and bitmask decodings 
 | **`199`** | `ID` | Firmware Identifier | - | R | `1190` = PU series |
 | **`305`** | `SP` | Target Air Temperature Setpoint | $0.1\ ^\circ\text{C}$ | R/W | `50` to `400` ($5.0^\circ\text{C}$ to $40.0^\circ\text{C}$, default `200`) |
 | **`312`** | `SP_RH` | Relative Humidity Setpoint | $1\ \%$ | R/W | `20` to `90` (default `50`) |
-| **`457`** | `FSW` | Motorized Flap Swing Control | - | R/W | `0` = Fixed / Off, `1` = Oscillating Swing |
+| **`457`** | `FSW` | Motorized Flap Position / Swing (Filomuro) | - | R/W | `0` = Auto, `1` = Pos 1 (45°), `2` = Pos 2, `3` = Pos 3, `7` = Swing |
+| **`510`** | `LLO` | Minimum Water Temp for Heating ($T_2$) | $0.1\ ^\circ\text{C}$ | R/W | `0` to `1000` ($0.0^\circ\text{C}$ to $100.0^\circ\text{C}$, default `300` / $30.0^\circ\text{C}$) |
+| **`511`** | `LHI` | Maximum Water Temp for Cooling ($T_2$) | $0.1\ ^\circ\text{C}$ | R/W | `0` to `1000` ($0.0^\circ\text{C}$ to $100.0^\circ\text{C}$, default `200` / $20.0^\circ\text{C}$) |
 | **`530`** | `OS1` | Ambient Sensor $T_1$ Calibration Offset | $0.1\ ^\circ\text{C}$ | R/W | `-12` to `+12` ($-1.2^\circ\text{C}$ to $+1.2^\circ\text{C}$) |
 | **`550`** | `ADR` | Modbus Slave Address | - | R/W | `1` to `255` (default `1`) |
 | **`553`** | `PRG` | Program, Fan Speed & Power Control | - | R/W | See Program Bitmask below |

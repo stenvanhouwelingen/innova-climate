@@ -10,7 +10,11 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import (
+    config_validation as cv,
+    device_registry as dr,
+    entity_registry as er,
+)
 
 from .const import (
     CONF_BAUDRATE,
@@ -21,7 +25,6 @@ from .const import (
     CONF_SERIAL_PORT,
     CONF_SLAVE_ID,
     CONNECTION_TYPE_SERIAL,
-    CONNECTION_TYPE_TCP,
     DEFAULT_BAUDRATE,
     DEFAULT_POLL_INTERVAL,
     DEFAULT_SLAVE_ID,
@@ -117,49 +120,79 @@ class AsyncModbusClientWrapper:
                 raise
 
 
+def _get_target_coordinators(
+    hass: HomeAssistant, call: ServiceCall
+) -> list[InnovaDataUpdateCoordinator]:
+    """Resolve targeted InnovaDataUpdateCoordinators from service call targets."""
+    target_entry_ids: set[str] = set()
+
+    if entity_ids := call.data.get("entity_id"):
+        if isinstance(entity_ids, str):
+            entity_ids = [entity_ids]
+        ent_reg = er.async_get(hass)
+        for entity_id in entity_ids:
+            if (ent_entry := ent_reg.async_get(entity_id)) and ent_entry.config_entry_id:
+                target_entry_ids.add(ent_entry.config_entry_id)
+
+    if device_ids := call.data.get("device_id"):
+        if isinstance(device_ids, str):
+            device_ids = [device_ids]
+        dev_reg = dr.async_get(hass)
+        for device_id in device_ids:
+            if dev_entry := dev_reg.async_get(device_id):
+                target_entry_ids.update(dev_entry.config_entries)
+
+    coordinators: list[InnovaDataUpdateCoordinator] = []
+    for entry in hass.config_entries.async_entries(DOMAIN):
+        if target_entry_ids and entry.entry_id not in target_entry_ids:
+            continue
+        if hasattr(entry, "runtime_data") and isinstance(
+            entry.runtime_data, InnovaDataUpdateCoordinator
+        ):
+            coordinators.append(entry.runtime_data)
+    return coordinators
+
+
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     """Set up the Innova Climate services."""
     async def async_handle_supervisor(call: ServiceCall) -> None:
         enabled: bool = call.data[ATTR_ENABLED]
-        for entry in hass.config_entries.async_entries(DOMAIN):
-            if hasattr(entry, "runtime_data") and isinstance(entry.runtime_data, InnovaDataUpdateCoordinator):
-                coordinator: InnovaDataUpdateCoordinator = entry.runtime_data
-                await coordinator.device.async_set_supervisor_mode(enabled)
-                await coordinator.async_request_refresh()
+        for coordinator in _get_target_coordinators(hass, call):
+            await coordinator.device.async_set_supervisor_mode(enabled)
+            await coordinator.async_notify_write()
 
     async def async_handle_offset(call: ServiceCall) -> None:
         offset: float = float(call.data[ATTR_OFFSET])
-        for entry in hass.config_entries.async_entries(DOMAIN):
-            if hasattr(entry, "runtime_data") and isinstance(entry.runtime_data, InnovaDataUpdateCoordinator):
-                coordinator: InnovaDataUpdateCoordinator = entry.runtime_data
-                await coordinator.device.async_set_room_temp_offset(offset)
-                await coordinator.async_request_refresh()
+        for coordinator in _get_target_coordinators(hass, call):
+            await coordinator.device.async_set_room_temp_offset(offset)
+            await coordinator.async_notify_write()
 
     async def async_handle_keypad_lock(call: ServiceCall) -> None:
         locked: bool = call.data[ATTR_LOCKED]
-        for entry in hass.config_entries.async_entries(DOMAIN):
-            if hasattr(entry, "runtime_data") and isinstance(entry.runtime_data, InnovaDataUpdateCoordinator):
-                coordinator: InnovaDataUpdateCoordinator = entry.runtime_data
-                await coordinator.device.async_set_keypad_lock(locked)
-                await coordinator.async_request_refresh()
+        for coordinator in _get_target_coordinators(hass, call):
+            await coordinator.device.async_set_keypad_lock(locked)
+            await coordinator.async_notify_write()
 
     hass.services.async_register(
         DOMAIN,
         SERVICE_SET_SUPERVISOR_MODE,
         async_handle_supervisor,
-        schema=vol.Schema({vol.Required(ATTR_ENABLED): cv.boolean}),
+        schema=vol.Schema({vol.Required(ATTR_ENABLED): cv.boolean}, extra=vol.ALLOW_EXTRA),
     )
     hass.services.async_register(
         DOMAIN,
         SERVICE_SET_ROOM_TEMP_OFFSET,
         async_handle_offset,
-        schema=vol.Schema({vol.Required(ATTR_OFFSET): vol.Coerce(float)}),
+        schema=vol.Schema(
+            {vol.Required(ATTR_OFFSET): vol.All(vol.Coerce(float), vol.Range(min=-1.2, max=1.2))},
+            extra=vol.ALLOW_EXTRA,
+        ),
     )
     hass.services.async_register(
         DOMAIN,
         SERVICE_SET_KEYPAD_LOCK,
         async_handle_keypad_lock,
-        schema=vol.Schema({vol.Required(ATTR_LOCKED): cv.boolean}),
+        schema=vol.Schema({vol.Required(ATTR_LOCKED): cv.boolean}, extra=vol.ALLOW_EXTRA),
     )
 
     return True

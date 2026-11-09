@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum, IntEnum, StrEnum
+from enum import StrEnum
 
 
 class InnovaBoardFamily(StrEnum):
@@ -39,6 +39,34 @@ class InnovaAction(StrEnum):
     COOLING = "cooling"
 
 
+class InnovaFlapMode(StrEnum):
+    """Innova Filomuro motorized flap mode / position."""
+
+    AUTO = "auto"              # 0: Automatic / Default opening
+    POSITION_1 = "position_1"  # 1: Fixed Position 1 (Halfway / 45 deg)
+    POSITION_2 = "position_2"  # 2: Fixed Position 2 (Horizontal)
+    POSITION_3 = "position_3"  # 3: Fixed Position 3 (Fully Open)
+    SWING = "swing"            # 7 (or 4): Continuous oscillation
+
+
+FLAP_MODE_TO_REG: dict[InnovaFlapMode, int] = {
+    InnovaFlapMode.AUTO: 0,
+    InnovaFlapMode.POSITION_1: 1,
+    InnovaFlapMode.POSITION_2: 2,
+    InnovaFlapMode.POSITION_3: 3,
+    InnovaFlapMode.SWING: 7,
+}
+
+REG_TO_FLAP_MODE: dict[int, InnovaFlapMode] = {
+    0: InnovaFlapMode.AUTO,
+    1: InnovaFlapMode.POSITION_1,
+    2: InnovaFlapMode.POSITION_2,
+    3: InnovaFlapMode.POSITION_3,
+    4: InnovaFlapMode.SWING,
+    7: InnovaFlapMode.SWING,
+}
+
+
 class InnovaRegistersModern:
     """Holding register addresses for the n273025d modern board family."""
 
@@ -59,6 +87,8 @@ class InnovaRegistersModern:
     SPH_W = 303        # Web maximum setpoint limit (0.1 °C)
     SP = 305           # Target temperature setpoint (0.1 °C)
     FSW = 457          # Flap swing motorized louver (0=Off, 1=On)
+    LLO = 510          # Minimum water temperature for heating (0.1 °C)
+    LHI = 511          # Maximum water temperature for cooling (0.1 °C)
     OS1 = 530          # Room sensor calibration offset (0.1 °C)
     ADR = 550          # Modbus slave address
     PRG = 553          # Program control (Fan speed, standby, keypad lock)
@@ -83,6 +113,8 @@ class InnovaRegistersLegacy:
     # Setpoints & Configuration
     ADR = 200          # Modbus slave address
     PRG = 201          # Program control (Fan speed, standby, keypad lock)
+    LLO = 218          # Minimum water temperature for heating (0.1 °C)
+    LHI = 219          # Maximum water temperature for cooling (0.1 °C)
     SP = 231           # Target temperature setpoint (0.1 °C)
     MAN = 233          # Seasonal mode (0=Auto, 3=Heating, 5=Cooling)
     OS1 = 242          # Room sensor calibration offset (0.1 °C)

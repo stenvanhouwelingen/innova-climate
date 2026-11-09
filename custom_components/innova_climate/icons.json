@@ -52,6 +52,13 @@
           "off": "mdi:lock-open"
         }
       },
+      "web_led_off": {
+        "default": "mdi:led-off",
+        "state": {
+          "on": "mdi:led-off",
+          "off": "mdi:led-on"
+        }
+      },
       "flap_swing": {
         "default": "mdi:weather-windy"
       }
@@ -62,11 +69,26 @@
       },
       "seasonal_mode_select": {
         "default": "mdi:sun-snowflake"
+      },
+      "flap_position_select": {
+        "default": "mdi:weather-windy"
       }
     },
     "number": {
       "t1_sensor_offset": {
         "default": "mdi:thermometer-lines"
+      },
+      "min_water_temp_heating": {
+        "default": "mdi:thermometer-chevron-up"
+      },
+      "max_water_temp_cooling": {
+        "default": "mdi:thermometer-chevron-down"
+      },
+      "web_min_setpoint": {
+        "default": "mdi:thermometer-low"
+      },
+      "web_max_setpoint": {
+        "default": "mdi:thermometer-high"
       }
     },
     "button": {

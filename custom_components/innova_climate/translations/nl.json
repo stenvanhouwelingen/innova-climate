@@ -60,7 +60,18 @@
   "entity": {
     "climate": {
       "thermostat": {
-        "name": "Thermostaat"
+        "name": "Thermostaat",
+        "state_attributes": {
+          "swing_mode": {
+            "state": {
+              "off": "Auto (Standaard)",
+              "position_1": "Positie 1 (45° / Half open)",
+              "position_2": "Positie 2 (Horizontaal)",
+              "position_3": "Positie 3 (Volledig open)",
+              "on": "Oscillerende zwenkstand"
+            }
+          }
+        }
       }
     },
     "sensor": {
@@ -107,6 +118,9 @@
       "keypad_lock": {
         "name": "Toetsvergrendeling"
       },
+      "web_led_off": {
+        "name": "Display LED uitschakelen"
+      },
       "flap_swing": {
         "name": "Lamel zwenkfunctie"
       }
@@ -117,11 +131,33 @@
       },
       "seasonal_mode_select": {
         "name": "Bedrijfsmodus"
+      },
+      "flap_position_select": {
+        "name": "Lamelpositie",
+        "state": {
+          "auto": "Auto (Standaard)",
+          "position_1": "Positie 1 (45° / Half open)",
+          "position_2": "Positie 2 (Horizontaal)",
+          "position_3": "Positie 3 (Volledig open)",
+          "swing": "Oscillerende zwenkstand"
+        }
       }
     },
     "number": {
       "t1_sensor_offset": {
         "name": "Kamertemperatuur Kalibratie-offset"
+      },
+      "min_water_temp_heating": {
+        "name": "Minimale watertemperatuur verwarmen (LLO)"
+      },
+      "max_water_temp_cooling": {
+        "name": "Maximale watertemperatuur koelen (LHI)"
+      },
+      "web_min_setpoint": {
+        "name": "Web minimale insteltemperatuur (SPL_W)"
+      },
+      "web_max_setpoint": {
+        "name": "Web maximale insteltemperatuur (SPH_W)"
       }
     },
     "button": {

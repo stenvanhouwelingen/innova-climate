@@ -43,6 +43,60 @@ NUMBER_DESCRIPTIONS: tuple[InnovaNumberEntityDescription, ...] = (
         value_fn=lambda data: data.room_temp_offset,
         set_fn=lambda device, val: device.async_set_room_temp_offset(val),
     ),
+    InnovaNumberEntityDescription(
+        key="min_water_temp_heating",
+        translation_key="min_water_temp_heating",
+        device_class=NumberDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        native_min_value=10.0,
+        native_max_value=50.0,
+        native_step=0.5,
+        mode=NumberMode.BOX,
+        entity_category=EntityCategory.CONFIG,
+        value_fn=lambda data: data.min_water_temp_heating,
+        set_fn=lambda device, val: device.async_set_min_water_temp_heating(val),
+    ),
+    InnovaNumberEntityDescription(
+        key="max_water_temp_cooling",
+        translation_key="max_water_temp_cooling",
+        device_class=NumberDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        native_min_value=10.0,
+        native_max_value=35.0,
+        native_step=0.5,
+        mode=NumberMode.BOX,
+        entity_category=EntityCategory.CONFIG,
+        value_fn=lambda data: data.max_water_temp_cooling,
+        set_fn=lambda device, val: device.async_set_max_water_temp_cooling(val),
+    ),
+    InnovaNumberEntityDescription(
+        key="web_min_setpoint",
+        translation_key="web_min_setpoint",
+        device_class=NumberDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        native_min_value=5.0,
+        native_max_value=40.0,
+        native_step=0.5,
+        mode=NumberMode.BOX,
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
+        value_fn=lambda data: data.web_min_setpoint,
+        set_fn=lambda device, val: device.async_set_min_setpoint_limit(val),
+    ),
+    InnovaNumberEntityDescription(
+        key="web_max_setpoint",
+        translation_key="web_max_setpoint",
+        device_class=NumberDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        native_min_value=5.0,
+        native_max_value=40.0,
+        native_step=0.5,
+        mode=NumberMode.BOX,
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
+        value_fn=lambda data: data.web_max_setpoint,
+        set_fn=lambda device, val: device.async_set_max_setpoint_limit(val),
+    ),
 )
 
 
@@ -81,5 +135,4 @@ class InnovaNumberEntity(InnovaEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Set new value."""
         await self.entity_description.set_fn(self.coordinator.device, value)
-        self.async_write_ha_state()
-        await self.coordinator.async_request_refresh()
+        await self.coordinator.async_notify_write()

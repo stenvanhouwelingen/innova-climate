@@ -60,7 +60,18 @@
   "entity": {
     "climate": {
       "thermostat": {
-        "name": "Thermostat"
+        "name": "Thermostat",
+        "state_attributes": {
+          "swing_mode": {
+            "state": {
+              "off": "Auto (Default)",
+              "position_1": "Position 1 (45° / Halfway)",
+              "position_2": "Position 2 (Horizontal)",
+              "position_3": "Position 3 (Fully Open)",
+              "on": "Oscillating Swing"
+            }
+          }
+        }
       }
     },
     "sensor": {
@@ -107,6 +118,9 @@
       "keypad_lock": {
         "name": "Keypad Lock"
       },
+      "web_led_off": {
+        "name": "Turn Off Display LED"
+      },
       "flap_swing": {
         "name": "Flap Swing"
       }
@@ -117,11 +131,33 @@
       },
       "seasonal_mode_select": {
         "name": "Seasonal Mode"
+      },
+      "flap_position_select": {
+        "name": "Flap Position",
+        "state": {
+          "auto": "Auto (Default)",
+          "position_1": "Position 1 (45° / Halfway)",
+          "position_2": "Position 2 (Horizontal)",
+          "position_3": "Position 3 (Fully Open)",
+          "swing": "Oscillating Swing"
+        }
       }
     },
     "number": {
       "t1_sensor_offset": {
         "name": "Room Temperature Offset"
+      },
+      "min_water_temp_heating": {
+        "name": "Minimum Water Temperature Heating (LLO)"
+      },
+      "max_water_temp_cooling": {
+        "name": "Maximum Water Temperature Cooling (LHI)"
+      },
+      "web_min_setpoint": {
+        "name": "Web Minimum Setpoint (SPL_W)"
+      },
+      "web_max_setpoint": {
+        "name": "Web Maximum Setpoint (SPH_W)"
       }
     },
     "button": {

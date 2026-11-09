@@ -15,9 +15,11 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .innova_modbus import (
+    InnovaBoardFamily,
     InnovaData,
     InnovaFancoil,
     InnovaFanSpeed,
+    InnovaFlapMode,
     InnovaMode,
 )
 
@@ -50,6 +52,20 @@ SELECT_DESCRIPTIONS: tuple[InnovaSelectEntityDescription, ...] = (
         current_option_fn=lambda data: str(data.mode) if data.mode != InnovaMode.OFF else str(InnovaMode.AUTO),
         set_option_fn=lambda device, opt: device.async_set_mode(InnovaMode(opt)),
     ),
+    InnovaSelectEntityDescription(
+        key="flap_position_select",
+        translation_key="flap_position_select",
+        options=[
+            InnovaFlapMode.AUTO,
+            InnovaFlapMode.POSITION_1,
+            InnovaFlapMode.POSITION_2,
+            InnovaFlapMode.POSITION_3,
+            InnovaFlapMode.SWING,
+        ],
+        entity_category=EntityCategory.CONFIG,
+        current_option_fn=lambda data: str(data.flap_mode),
+        set_option_fn=lambda device, opt: device.async_set_flap_mode(InnovaFlapMode(opt)),
+    ),
 )
 
 
@@ -60,10 +76,15 @@ async def async_setup_entry(
 ) -> None:
     """Set up Innova Climate select entities."""
     coordinator: InnovaDataUpdateCoordinator = entry.runtime_data
-    async_add_entities(
-        InnovaSelectEntity(coordinator, description)
-        for description in SELECT_DESCRIPTIONS
-    )
+    entities: list[InnovaSelectEntity] = []
+    for description in SELECT_DESCRIPTIONS:
+        if (
+            description.key == "flap_position_select"
+            and coordinator.device.board_family != InnovaBoardFamily.N273025D
+        ):
+            continue
+        entities.append(InnovaSelectEntity(coordinator, description))
+    async_add_entities(entities)
 
 
 class InnovaSelectEntity(InnovaEntity, SelectEntity):
@@ -88,5 +109,4 @@ class InnovaSelectEntity(InnovaEntity, SelectEntity):
     async def async_select_option(self, option: str) -> None:
         """Change selected option."""
         await self.entity_description.set_option_fn(self.coordinator.device, option)
-        self.async_write_ha_state()
-        await self.coordinator.async_request_refresh()
+        await self.coordinator.async_notify_write()

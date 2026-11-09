@@ -7,7 +7,6 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN
 from .coordinator import InnovaDataUpdateCoordinator
 
 
@@ -53,7 +52,14 @@ async def async_get_config_entry_diagnostics(
                 "window_contact_open": data.window_contact_open,
                 "supervisor_mode": data.supervisor_mode,
                 "keypad_locked": data.keypad_locked,
+                "web_led_off": data.web_led_off,
+                "raw_flap": data.raw_flap,
+                "flap_mode": str(data.flap_mode),
                 "flap_swing": data.flap_swing,
+                "min_water_temp_heating": data.min_water_temp_heating,
+                "max_water_temp_cooling": data.max_water_temp_cooling,
+                "web_min_setpoint": data.web_min_setpoint,
+                "web_max_setpoint": data.web_max_setpoint,
                 "room_temp_offset": data.room_temp_offset,
             },
         },

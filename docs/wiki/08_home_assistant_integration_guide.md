@@ -9,7 +9,7 @@ This guide explains how to install, configure, and operate the **Innova Fancoil 
 Instead of compiling and uploading heavy C++ code to individual microcontrollers:
 1. **The Microcontroller (M5Stack Atom Lite / NanoC6 / etc.)** runs a lightweight, generic ESPHome Serial / TCP Stream Server on port `8899`.
 2. **Home Assistant** handles all Innova Modbus register decoding, climate state machines, thermostat presets, and diagnostic sensors.
-3. **Firmware updates are eliminated**: You update your fancoil integration via Home Assistant or HACS with a single click.
+3. **Microcontroller compilation overhead is eliminated**: You update your fancoil integration via Home Assistant Marketplace with a single click, completely avoiding ESPHome C++ compile overhead, firmware re-flashing, and ESPHome `modbus_controller` polling deprecations (such as `skip_updates`).
 
 ---
 
@@ -42,13 +42,26 @@ Instead of compiling and uploading heavy C++ code to individual microcontrollers
 
 ## 4. Install the Home Assistant Integration
 
-### Option A: Via HACS (Custom Repository)
+> [!NOTE]
+> **Marketplace vs HACS**:
+> Starting in **Home Assistant 2026.11**, HACS is natively integrated directly into Home Assistant Core as the **Marketplace** (accessible via **Settings > Marketplace**). Both workflows use the same underlying repository catalog and are supported.
+
+### Option A: Via Home Assistant Marketplace (Recommended for HA 2026.11+)
+
+[![Open your Home Assistant instance and open a repository in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=stenvanhouwelingen&repository=innova-climate&category=integration)
+
+1. Click the 1-click badge above, or navigate in Home Assistant to **Settings** $\rightarrow$ **Marketplace**.
+2. Click the three dots (overflow menu) in the top-right $\rightarrow$ **Custom repositories**.
+3. Enter `https://github.com/stenvanhouwelingen/innova-climate` with category **Integration**.
+4. Click **Download**, then restart Home Assistant when prompted.
+
+### Option B: Via HACS (For Home Assistant Versions Prior to 2026.11)
 1. In Home Assistant, open **HACS** $\rightarrow$ **Integrations**.
 2. Click the three dots in the upper right corner $\rightarrow$ **Custom repositories**.
 3. Add `https://github.com/stenvanhouwelingen/innova-climate` with category **Integration**.
 4. Click **Download**, then restart Home Assistant.
 
-### Option B: Manual Installation
+### Option C: Manual Installation
 1. Copy the `custom_components/innova_climate` folder into your Home Assistant `/config/custom_components/` directory.
 2. Restart Home Assistant.
 
@@ -77,6 +90,7 @@ Instead of compiling and uploading heavy C++ code to individual microcontrollers
 * **HVAC Modes**: `Off`, `Heat`, `Cool`, `Auto`
 * **Fan Modes**: `Auto`, `Low` (Night/Silent), `High` (Max/Boost)
 * **Preset Modes**: `Sleep` (Silent Mode), `Boost` (Max Speed), `None` (Auto)
+* **Swing Modes (Modern / Filomuro)**: `Auto (Default)`, `Position 1 (45° / Halfway)`, `Position 2 (Horizontal)`, `Position 3 (Fully Open)`, `Oscillating Swing`
 * **Target Temperature**: Adjustable in 0.5 °C increments (16.0 °C to 30.0 °C)
 * **Current Temperature**: Real-time room air temperature from probe T1
 
@@ -84,7 +98,7 @@ Instead of compiling and uploading heavy C++ code to individual microcontrollers
 * **Inlet Water Temperature (T2)**: Return water temperature (°C)
 * **Coil Water Temperature (T3)**: Internal heat exchanger coil temperature (°C) (automatically hidden if not present)
 * **Relative Humidity**: Room humidity percentage (if optional sensor is fitted)
-* **Diagnostics / Status**: Real-time operating state and alarm fault strings
+* **Diagnostics / Status**: Real-time operating state and alarm fault strings (e.g., `Heating`, `Heating (Waiting for water)`, `Stopped (Target reached)`)
 * **Firmware Version**: Readout of on-board Innova firmware version (e.g. `v1.9`)
 
 ### Binary Sensors
@@ -93,9 +107,14 @@ Instead of compiling and uploading heavy C++ code to individual microcontrollers
 * **Probe Connected (T2 / T3)**: Connectivity sensors for temperature probes.
 
 ### Switches, Numbers & Controls
-* **Room Temperature Calibration Offset (`number`)**: Slider for T1 sensor offset (-1.2 °C to +1.2 °C).
+* **Room Temperature Calibration Offset (`number`)**: Box control for T1 sensor offset (-1.2 °C to +1.2 °C).
+* **Minimum Water Temperature Heating (`number`)**: Configurable $T_2$ water temperature threshold for heating (`LLO`, 10.0 °C to 50.0 °C; Register 510 on modern boards, Register 218 on legacy boards).
+* **Maximum Water Temperature Cooling (`number`)**: Configurable $T_2$ water temperature threshold for cooling (`LHI`, 10.0 °C to 35.0 °C; Register 511 on modern boards, Register 219 on legacy boards).
+* **Web Minimum / Maximum Setpoint Limits (`number`)**: Hardware setpoint bounds (`SPL_W` / `SPH_W`, disabled by default).
 * **Remote Supervisor Mode (`switch`)**: Locks local buttons so Home Assistant has sole authority.
 * **Keypad Lock (`switch`)**: Locks the physical on-board touch screen.
-* **Flap Swing (`switch`)**: Toggles motorized louver oscillation (Filomuro models).
+* **Turn Off Display LED (`switch`)**: Turns off the fancoil's bright onboard display LED at night.
+* **Flap Position (`select`)**: Directly selects the motorized louver position (`Auto`, `Position 1`, `Position 2`, `Position 3`, `Oscillating Swing`) on Filomuro models.
+* **Flap Swing (`switch`)**: Toggles motorized louver oscillation (disabled by default in favor of `Flap Position` and Thermostat `swing_modes`).
 * **Manual Refresh (`button`)**: Force immediate poll from fancoil.
 * **Alarm Events (`event`)**: Home Assistant event entity firing on alarm or filter maintenance alerts.

@@ -18,6 +18,8 @@ from homeassistant.components.climate.const import (
     PRESET_BOOST,
     PRESET_NONE,
     PRESET_SLEEP,
+    SWING_OFF,
+    SWING_ON,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
@@ -26,7 +28,9 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .innova_modbus import (
     InnovaAction,
+    InnovaBoardFamily,
     InnovaFanSpeed,
+    InnovaFlapMode,
     InnovaMode,
 )
 
@@ -52,6 +56,22 @@ HVAC_MODE_MAP = {
     HVACMode.HEAT: InnovaMode.HEATING,
     HVACMode.COOL: InnovaMode.COOLING,
     HVACMode.AUTO: InnovaMode.AUTO,
+}
+
+SWING_MODE_MAP = {
+    SWING_OFF: InnovaFlapMode.AUTO,
+    "position_1": InnovaFlapMode.POSITION_1,
+    "position_2": InnovaFlapMode.POSITION_2,
+    "position_3": InnovaFlapMode.POSITION_3,
+    SWING_ON: InnovaFlapMode.SWING,
+}
+
+REVERSE_SWING_MAP = {
+    InnovaFlapMode.AUTO: SWING_OFF,
+    InnovaFlapMode.POSITION_1: "position_1",
+    InnovaFlapMode.POSITION_2: "position_2",
+    InnovaFlapMode.POSITION_3: "position_3",
+    InnovaFlapMode.SWING: SWING_ON,
 }
 
 
@@ -90,18 +110,27 @@ class InnovaClimateEntity(InnovaEntity, ClimateEntity):
         PRESET_SLEEP,
         PRESET_BOOST,
     ]
-
-    _attr_supported_features = (
-        ClimateEntityFeature.TARGET_TEMPERATURE
-        | ClimateEntityFeature.FAN_MODE
-        | ClimateEntityFeature.PRESET_MODE
-        | ClimateEntityFeature.TURN_OFF
-        | ClimateEntityFeature.TURN_ON
-    )
+    _attr_swing_modes = [
+        SWING_OFF,
+        "position_1",
+        "position_2",
+        "position_3",
+        SWING_ON,
+    ]
 
     def __init__(self, coordinator: InnovaDataUpdateCoordinator) -> None:
         """Initialize the climate entity."""
         super().__init__(coordinator, "climate")
+        features = (
+            ClimateEntityFeature.TARGET_TEMPERATURE
+            | ClimateEntityFeature.FAN_MODE
+            | ClimateEntityFeature.PRESET_MODE
+            | ClimateEntityFeature.TURN_OFF
+            | ClimateEntityFeature.TURN_ON
+        )
+        if coordinator.device.board_family == InnovaBoardFamily.N273025D:
+            features |= ClimateEntityFeature.SWING_MODE
+        self._attr_supported_features = features
 
     @property
     def current_temperature(self) -> float | None:
@@ -160,26 +189,28 @@ class InnovaClimateEntity(InnovaEntity, ClimateEntity):
             return PRESET_BOOST
         return PRESET_NONE
 
+    @property
+    def swing_mode(self) -> str:
+        """Return the current swing mode."""
+        return REVERSE_SWING_MAP.get(self.coordinator.data.flap_mode, SWING_OFF)
+
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
         if (temp := kwargs.get(ATTR_TEMPERATURE)) is not None:
             await self.coordinator.device.async_set_target_temperature(temp)
-            self.async_write_ha_state()
-            await self.coordinator.async_request_refresh()
+            await self.coordinator.async_notify_write()
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target HVAC mode."""
         if hvac_mode in HVAC_MODE_MAP:
             await self.coordinator.device.async_set_mode(HVAC_MODE_MAP[hvac_mode])
-            self.async_write_ha_state()
-            await self.coordinator.async_request_refresh()
+            await self.coordinator.async_notify_write()
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         """Set new target fan speed."""
         if fan_mode in FAN_MODE_MAP:
             await self.coordinator.device.async_set_fan_speed(FAN_MODE_MAP[fan_mode])
-            self.async_write_ha_state()
-            await self.coordinator.async_request_refresh()
+            await self.coordinator.async_notify_write()
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode (Night / Boost / None)."""
@@ -189,17 +220,20 @@ class InnovaClimateEntity(InnovaEntity, ClimateEntity):
             await self.coordinator.device.async_set_fan_speed(InnovaFanSpeed.MAX)
         else:
             await self.coordinator.device.async_set_fan_speed(InnovaFanSpeed.AUTO)
-        self.async_write_ha_state()
-        await self.coordinator.async_request_refresh()
+        await self.coordinator.async_notify_write()
+
+    async def async_set_swing_mode(self, swing_mode: str) -> None:
+        """Set new target swing mode."""
+        flap_mode = SWING_MODE_MAP.get(swing_mode, InnovaFlapMode.AUTO)
+        await self.coordinator.device.async_set_flap_mode(flap_mode)
+        await self.coordinator.async_notify_write()
 
     async def async_turn_on(self) -> None:
         """Turn on the fancoil."""
         await self.coordinator.device.async_set_power(True)
-        self.async_write_ha_state()
-        await self.coordinator.async_request_refresh()
+        await self.coordinator.async_notify_write()
 
     async def async_turn_off(self) -> None:
         """Turn off the fancoil (Standby)."""
         await self.coordinator.device.async_set_power(False)
-        self.async_write_ha_state()
-        await self.coordinator.async_request_refresh()
+        await self.coordinator.async_notify_write()

@@ -14,7 +14,7 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .innova_modbus import InnovaData, InnovaFancoil
+from .innova_modbus import InnovaBoardFamily, InnovaData, InnovaFancoil
 
 from .coordinator import InnovaDataUpdateCoordinator
 from .entity import InnovaEntity
@@ -46,10 +46,19 @@ SWITCH_DESCRIPTIONS: tuple[InnovaSwitchEntityDescription, ...] = (
         set_fn=lambda device, val: device.async_set_keypad_lock(val),
     ),
     InnovaSwitchEntityDescription(
+        key="web_led_off",
+        translation_key="web_led_off",
+        icon="mdi:led-off",
+        entity_category=EntityCategory.CONFIG,
+        is_on_fn=lambda data: data.web_led_off,
+        set_fn=lambda device, val: device.async_set_led_off(val),
+    ),
+    InnovaSwitchEntityDescription(
         key="flap_swing",
         translation_key="flap_swing",
         icon="mdi:weather-windy",
         entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
         is_on_fn=lambda data: data.flap_swing,
         set_fn=lambda device, val: device.async_set_flap_swing(val),
     ),
@@ -63,10 +72,15 @@ async def async_setup_entry(
 ) -> None:
     """Set up Innova Climate switch entities."""
     coordinator: InnovaDataUpdateCoordinator = entry.runtime_data
-    async_add_entities(
-        InnovaSwitchEntity(coordinator, description)
-        for description in SWITCH_DESCRIPTIONS
-    )
+    entities: list[InnovaSwitchEntity] = []
+    for description in SWITCH_DESCRIPTIONS:
+        if (
+            description.key == "flap_swing"
+            and coordinator.device.board_family != InnovaBoardFamily.N273025D
+        ):
+            continue
+        entities.append(InnovaSwitchEntity(coordinator, description))
+    async_add_entities(entities)
 
 
 class InnovaSwitchEntity(InnovaEntity, SwitchEntity):
@@ -91,11 +105,9 @@ class InnovaSwitchEntity(InnovaEntity, SwitchEntity):
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the switch on."""
         await self.entity_description.set_fn(self.coordinator.device, True)
-        self.async_write_ha_state()
-        await self.coordinator.async_request_refresh()
+        await self.coordinator.async_notify_write()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the switch off."""
         await self.entity_description.set_fn(self.coordinator.device, False)
-        self.async_write_ha_state()
-        await self.coordinator.async_request_refresh()
+        await self.coordinator.async_notify_write()

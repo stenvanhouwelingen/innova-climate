@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 import logging
 from typing import Callable
 
-from homeassistant.core import HomeAssistant
+from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import DEFAULT_POLL_INTERVAL, DOMAIN, EVENT_INNOVA_ALARM
@@ -35,6 +36,23 @@ class InnovaDataUpdateCoordinator(DataUpdateCoordinator[InnovaData]):
         self._prev_alarms: int = 0
         self._prev_window_open: bool = False
         self._event_callbacks: list[Callable[[str, dict], None]] = []
+        self._pending_refresh_unsub: CALLBACK_TYPE | None = None
+
+    async def async_notify_write(self, delay: float = 2.0) -> None:
+        """Broadcast optimistic state immediately and schedule a debounced hardware poll."""
+        self.async_set_updated_data(self.device.data)
+        if self._pending_refresh_unsub is not None:
+            self._pending_refresh_unsub()
+            self._pending_refresh_unsub = None
+
+        @callback
+        def _async_delayed_refresh(_now: datetime) -> None:
+            self._pending_refresh_unsub = None
+            self.hass.async_create_task(self.async_request_refresh())
+
+        self._pending_refresh_unsub = async_call_later(
+            self.hass, delay, _async_delayed_refresh
+        )
 
     def register_event_listener(self, callback_fn: Callable[[str, dict], None]) -> Callable[[], None]:
         """Register a callback for alarm events."""

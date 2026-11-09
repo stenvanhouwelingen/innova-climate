@@ -8,7 +8,9 @@ from .const import (
     InnovaAction,
     InnovaBoardFamily,
     InnovaFanSpeed,
+    InnovaFlapMode,
     InnovaMode,
+    REG_TO_FLAP_MODE,
     TEMP_MAX_VALID,
     TEMP_MIN_VALID,
 )
@@ -39,6 +41,7 @@ class InnovaData:
     raw_alarms: int = 0
     raw_program: int = 0
     raw_web_flags: int = 0
+    raw_flap: int = 0
 
     # Diagnostic & Hardware Info
     firmware_release: float | None = None
@@ -46,7 +49,7 @@ class InnovaData:
     alarm_active: bool = False
     alarm_description: str = "No faults"
     status_description: str = "Idle"
-    fan_status_description: str = "Stopped"
+    fan_status_description: str = "Stopped (Target reached)"
 
     # Hardware Feature Flags
     t2_probe_present: bool = True
@@ -54,7 +57,7 @@ class InnovaData:
     rh_sensor_present: bool = False
     window_contact_open: bool = False
 
-    # Configuration Switches
+    # Configuration Switches & Flap
     supervisor_mode: bool = False
     keypad_locked: bool = False
     web_led_off: bool = False
@@ -66,11 +69,14 @@ class InnovaData:
     web_disable_all_keys: bool = False
     web_disable_seasonal_key: bool = False
     flap_swing: bool = False
+    flap_mode: InnovaFlapMode = InnovaFlapMode.AUTO
 
     # Calibration & Setpoint Limits
     room_temp_offset: float = 0.0
     web_min_setpoint: float = 16.0
     web_max_setpoint: float = 30.0
+    min_water_temp_heating: float = 30.0
+    max_water_temp_cooling: float = 20.0
 
     @classmethod
     def from_registers_modern(cls, registers: dict[int, int]) -> InnovaData:
@@ -114,54 +120,7 @@ class InnovaData:
             if 5.0 <= sp <= 40.0:
                 data.target_temperature = round(sp, 1)
 
-        # 4. Status Register 150
-        if 150 in registers:
-            status = registers[150]
-            data.raw_status = status
-            data.alarm_active = bool(status & (1 << 8))
-
-            # Probes presence flags
-            data.t2_probe_present = (data.inlet_water_temp_t2 is not None) and not bool(status & (1 << 12))
-            data.t3_probe_present = (data.coil_water_temp_t3 is not None) and not bool(status & (1 << 13)) and not bool(status & (1 << 14))
-
-            # Action determination
-            if status & (1 << 10):
-                data.action = InnovaAction.STANDBY
-                data.status_description = "Standby"
-                data.fan_status_description = "Stopped (Standby)"
-            elif status & (1 << 0):
-                data.action = InnovaAction.COOLING
-                data.status_description = "Cooling"
-                data.fan_status_description = "Running"
-            elif status & (1 << 1):
-                data.action = InnovaAction.HEATING
-                data.status_description = "Heating"
-                data.fan_status_description = "Running"
-            else:
-                data.action = InnovaAction.IDLE
-                data.status_description = "Idle"
-
-                if status & (1 << 2):
-                    data.fan_status_description = "Stopped (Water unsuitable for cooling)"
-                elif status & (1 << 3):
-                    data.fan_status_description = "Stopped (Water unsuitable for heating)"
-                elif status & (1 << 4):
-                    data.fan_status_description = "Stopped (Inadequate Inlet T2 temp)"
-                elif status & (1 << 5):
-                    data.fan_status_description = "Stopped (Inadequate Coil T3 temp)"
-                elif status & (1 << 6):
-                    data.fan_status_description = "Stopped (Inadequate water temp trend)"
-                else:
-                    data.fan_status_description = "Running"
-
-        # 5. Alarms Register 151
-        if 151 in registers:
-            alarm = registers[151]
-            data.raw_alarms = alarm
-            data.window_contact_open = bool(alarm & (1 << 8))
-            data.alarm_description = cls._decode_alarms_modern(alarm)
-
-        # 6. Program Register 553
+        # 4. Program Register 553 (parsed before Status so power_on is known)
         if 553 in registers:
             prg = registers[553]
             data.raw_program = prg
@@ -180,7 +139,7 @@ class InnovaData:
             else:
                 data.fan_speed = InnovaFanSpeed.AUTO
 
-        # 7. Seasonal Mode Register 556
+        # 5. Seasonal Mode Register 556
         if 556 in registers:
             man = registers[556]
             if not data.power_on:
@@ -191,6 +150,71 @@ class InnovaData:
                 data.mode = InnovaMode.COOLING
             else:
                 data.mode = InnovaMode.AUTO
+
+        # 6. Status Register 150
+        if 150 in registers:
+            status = registers[150]
+            data.raw_status = status
+            data.alarm_active = bool(status & (1 << 8))
+
+            # Probes presence flags
+            data.t2_probe_present = (data.inlet_water_temp_t2 is not None) and not bool(status & (1 << 12))
+            data.t3_probe_present = (data.coil_water_temp_t3 is not None) and not bool(status & (1 << 13)) and not bool(status & (1 << 14))
+
+            # Action & Fan Status determination (checking Standby, Antifreeze, and Fan-Stop bits before loop bits)
+            if not data.power_on or (status & (1 << 10)):
+                data.action = InnovaAction.STANDBY
+                data.status_description = "Standby"
+                data.fan_status_description = "Stopped (Standby)"
+            elif status & (1 << 7):
+                data.action = InnovaAction.HEATING
+                data.status_description = "Antifreeze Protection"
+                data.fan_status_description = "Running (Antifreeze)"
+            elif status & 0x007C:  # Any fan stop bit (bits 2..6) active
+                data.action = InnovaAction.IDLE
+                if status & (1 << 0):
+                    data.status_description = "Cooling (Waiting for water)"
+                elif status & (1 << 1):
+                    data.status_description = "Heating (Waiting for water)"
+                else:
+                    data.status_description = "Idle (Waiting for water)"
+
+                if status & (1 << 2):
+                    data.fan_status_description = "Stopped (Water unsuitable for cooling)"
+                elif status & (1 << 3):
+                    data.fan_status_description = "Stopped (Water unsuitable for heating)"
+                elif status & (1 << 4):
+                    data.fan_status_description = "Stopped (Inadequate Inlet T2 temp)"
+                elif status & (1 << 5):
+                    data.fan_status_description = "Stopped (Inadequate Coil T3 temp)"
+                else:
+                    data.fan_status_description = "Stopped (Inadequate water temp trend)"
+            elif status & (1 << 0):
+                data.action = InnovaAction.COOLING
+                data.status_description = "Cooling"
+                data.fan_status_description = "Running"
+            elif status & (1 << 1):
+                data.action = InnovaAction.HEATING
+                data.status_description = "Heating"
+                data.fan_status_description = "Running"
+            else:
+                data.action = InnovaAction.IDLE
+                data.status_description = "Idle"
+                data.fan_status_description = "Stopped (Target reached)"
+
+            if status & (1 << 11):
+                data.status_description = f"{data.status_description} (Master Timeout)"
+        elif not data.power_on:
+            data.action = InnovaAction.STANDBY
+            data.status_description = "Standby"
+            data.fan_status_description = "Stopped (Standby)"
+
+        # 7. Alarms Register 151
+        if 151 in registers:
+            alarm = registers[151]
+            data.raw_alarms = alarm
+            data.window_contact_open = bool(alarm & (1 << 8))
+            data.alarm_description = cls._decode_alarms_modern(alarm)
 
         # 8. Webserver Lockout Register 557
         if 557 in registers:
@@ -206,17 +230,24 @@ class InnovaData:
             data.web_disable_seasonal_key = bool(web & (1 << 8))
             data.supervisor_mode = bool(web & (1 << 3) and web & (1 << 2))
 
-        # 9. Flap Swing Register 457
+        # 9. Flap Swing / Position Register 457 (Filomuro)
         if 457 in registers:
-            data.flap_swing = bool(registers[457] & 0x01)
+            raw_flap = registers[457]
+            data.raw_flap = raw_flap
+            data.flap_mode = REG_TO_FLAP_MODE.get(raw_flap, InnovaFlapMode.AUTO)
+            data.flap_swing = data.flap_mode == InnovaFlapMode.SWING
 
-        # 10. Sensor Offset 530 & Limits 302, 303
+        # 10. Water Limits 510, 511 & Sensor Offset 530 & Limits 302, 303
+        if 510 in registers:
+            data.min_water_temp_heating = round(registers[510] * 0.1, 1)
+        if 511 in registers:
+            data.max_water_temp_cooling = round(registers[511] * 0.1, 1)
         if 530 in registers:
-            data.room_temp_offset = cls._to_signed_16(registers[530]) * 0.1
+            data.room_temp_offset = round(cls._to_signed_16(registers[530]) * 0.1, 1)
         if 302 in registers:
-            data.web_min_setpoint = registers[302] * 0.1
+            data.web_min_setpoint = round(registers[302] * 0.1, 1)
         if 303 in registers:
-            data.web_max_setpoint = registers[303] * 0.1
+            data.web_max_setpoint = round(registers[303] * 0.1, 1)
 
         return data
 
@@ -229,23 +260,26 @@ class InnovaData:
         if 0 in registers:
             raw_t1 = cls._to_signed_16(registers[0])
             t1 = raw_t1 * 0.1
-            data.room_temperature = t1 if TEMP_MIN_VALID <= t1 <= TEMP_MAX_VALID else None
+            data.room_temperature = round(t1, 1) if TEMP_MIN_VALID <= t1 <= TEMP_MAX_VALID else None
 
         if 1 in registers:
             raw_t2 = cls._to_signed_16(registers[1])
             t2 = raw_t2 * 0.1
-            data.inlet_water_temp_t2 = t2 if TEMP_MIN_VALID <= t2 <= TEMP_MAX_VALID else None
+            data.inlet_water_temp_t2 = round(t2, 1) if TEMP_MIN_VALID <= t2 <= TEMP_MAX_VALID else None
 
         if 2 in registers:
             raw_t3 = cls._to_signed_16(registers[2])
             t3 = raw_t3 * 0.1
-            data.coil_water_temp_t3 = t3 if TEMP_MIN_VALID <= t3 <= TEMP_MAX_VALID else None
+            data.coil_water_temp_t3 = round(t3, 1) if TEMP_MIN_VALID <= t3 <= TEMP_MAX_VALID else None
 
         if 20 in registers:
             rh = registers[20] * 0.1
             if 0 < rh <= 100:
                 data.relative_humidity = round(rh, 1)
                 data.rh_sensor_present = True
+            else:
+                data.relative_humidity = None
+                data.rh_sensor_present = False
 
         # 2. Target Temperature Setpoint
         if 231 in registers:
@@ -253,34 +287,7 @@ class InnovaData:
             if 5.0 <= sp <= 40.0:
                 data.target_temperature = round(sp, 1)
 
-        # 3. Status Register 104
-        if 104 in registers:
-            status = registers[104]
-            data.raw_status = status
-            data.alarm_active = bool(status & (1 << 6))
-            data.t2_probe_present = not bool(status & (1 << 11))
-            data.t3_probe_present = not bool(status & (1 << 12))
-
-            if status & (1 << 8):
-                data.action = InnovaAction.STANDBY
-                data.status_description = "Standby"
-            elif status & (1 << 0):
-                data.action = InnovaAction.COOLING
-                data.status_description = "Cooling"
-            elif status & (1 << 1):
-                data.action = InnovaAction.HEATING
-                data.status_description = "Heating"
-            else:
-                data.action = InnovaAction.IDLE
-                data.status_description = "Idle"
-
-        # 4. Alarms Register 105
-        if 105 in registers:
-            alarm = registers[105]
-            data.raw_alarms = alarm
-            data.alarm_description = cls._decode_alarms_legacy(alarm)
-
-        # 5. Program Register 201
+        # 3. Program Register 201 (parsed before Status so power_on is known)
         if 201 in registers:
             prg = registers[201]
             data.raw_program = prg
@@ -297,7 +304,7 @@ class InnovaData:
             else:
                 data.fan_speed = InnovaFanSpeed.AUTO
 
-        # 6. Seasonal Mode Register 233
+        # 4. Seasonal Mode Register 233
         if 233 in registers:
             man = registers[233]
             if not data.power_on:
@@ -309,11 +316,89 @@ class InnovaData:
             else:
                 data.mode = InnovaMode.AUTO
 
+        # 5. Status Register 104
+        if 104 in registers:
+            status = registers[104]
+            data.raw_status = status
+            data.alarm_active = bool(status & (1 << 6))
+            data.t2_probe_present = (data.inlet_water_temp_t2 is not None) and not bool(status & (1 << 11))
+            data.t3_probe_present = (data.coil_water_temp_t3 is not None) and not bool(status & (1 << 12))
+
+            if not data.power_on or (status & (1 << 8)):
+                data.action = InnovaAction.STANDBY
+                data.status_description = "Standby"
+                data.fan_status_description = "Stopped (Standby)"
+            elif status & (1 << 5):
+                data.action = InnovaAction.HEATING
+                data.status_description = "Antifreeze Protection"
+                data.fan_status_description = "Running (Antifreeze)"
+            elif status & 0x001C:  # Any fan stop bit (bits 2..4) active
+                data.action = InnovaAction.IDLE
+                if status & (1 << 0):
+                    data.status_description = "Cooling (Waiting for water)"
+                elif status & (1 << 1):
+                    data.status_description = "Heating (Waiting for water)"
+                else:
+                    data.status_description = "Idle (Waiting for water)"
+
+                if status & (1 << 2):
+                    data.fan_status_description = "Stopped (Water unsuitable on H2)"
+                elif status & (1 << 3):
+                    data.fan_status_description = "Stopped (Water unsuitable on H4)"
+                else:
+                    data.fan_status_description = "Stopped (Unsuitable water / safety delay)"
+            elif status & (1 << 0):
+                data.action = InnovaAction.COOLING
+                data.status_description = "Cooling"
+                data.fan_status_description = "Running"
+            elif status & (1 << 1):
+                data.action = InnovaAction.HEATING
+                data.status_description = "Heating"
+                data.fan_status_description = "Running"
+            else:
+                data.action = InnovaAction.IDLE
+                data.status_description = "Idle"
+                data.fan_status_description = "Stopped (Target reached)"
+
+            if status & (1 << 10):
+                data.status_description = f"{data.status_description} (Master Timeout)"
+        elif not data.power_on:
+            data.action = InnovaAction.STANDBY
+            data.status_description = "Standby"
+            data.fan_status_description = "Stopped (Standby)"
+
+        # 6. Alarms Register 105
+        if 105 in registers:
+            alarm = registers[105]
+            data.raw_alarms = alarm
+            data.window_contact_open = bool(alarm & (1 << 8))
+            data.alarm_description = cls._decode_alarms_legacy(alarm)
+
         # 7. Webserver Register 247
         if 247 in registers:
             web = registers[247]
             data.raw_web_flags = web
+            data.web_led_off = bool(web & (1 << 0))
+            data.web_force_off = bool(web & (1 << 1))
+            data.web_disable_mode_change = bool(web & (1 << 2))
+            data.web_disable_power_control = bool(web & (1 << 3))
+            data.web_inhibit_extremes = bool(web & (1 << 4))
+            data.web_enable_setpoint_restriction = bool(web & (1 << 5))
+            data.web_disable_all_keys = bool(web & (1 << 6))
+            data.web_disable_seasonal_key = bool(web & (1 << 8))
             data.supervisor_mode = bool(web & (1 << 3) and web & (1 << 2))
+
+        # 8. Water Limits 218, 219 & Offset 242 & Limits 245, 246
+        if 218 in registers:
+            data.min_water_temp_heating = round(registers[218] * 0.1, 1)
+        if 219 in registers:
+            data.max_water_temp_cooling = round(registers[219] * 0.1, 1)
+        if 242 in registers:
+            data.room_temp_offset = round(cls._to_signed_16(registers[242]) * 0.1, 1)
+        if 245 in registers:
+            data.web_min_setpoint = round(registers[245] * 0.1, 1)
+        if 246 in registers:
+            data.web_max_setpoint = round(registers[246] * 0.1, 1)
 
         return data
 

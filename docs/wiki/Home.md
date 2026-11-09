@@ -23,9 +23,10 @@ Welcome to the **Innova Fancoil Technical Knowledge Base**. This documentation c
 
 4. [**Chapter 4: Heat Pumps & Low-Temperature Heating ($< 30^\circ\text{C}$ Water)**](04_heat_pumps_and_low_temp_heating.md)
    * The 30 °C water heating gate conflict with heat pump weather curves.
-   * **Method 1**: Disconnecting the $T_2$ sensor (official Innova bypass).
+   * **Method 0**: Adjusting Modbus registers (Register 510 `LLO` / 511 `LHI` on modern M7/PU boards; Register 218 `LLO` / 219 `LHI` on legacy bridge series).
+   * **Method 1**: Disconnecting the $T_2$ sensor (hardware bypass fallback).
    * **Method 2**: The $47\text{ k}\Omega$ parallel resistor hardware mod ($+4^\circ\text{C}$ shift).
-   * Board differences: PU series (hardcoded) vs Legacy Bridge series (Register 218 `LLO`).
+   * Board differences and firmware capabilities.
 
 5. [**Chapter 5: Control Boards & DIP Switch Configurations**](05_control_boards_and_dip_switches.md)
    * Board identification: PUB-30, ES690II, INN-FR-B32.
@@ -44,7 +45,7 @@ Welcome to the **Innova Fancoil Technical Knowledge Base**. This documentation c
    * Web control / lock Register 557 bitmask table.
 
 8. [**Chapter 8: Home Assistant Integration Guide**](08_home_assistant_integration_guide.md)
-   * Installation via HACS or manual copy.
+   * Installation via Home Assistant Marketplace (HA 2026.11+) or HACS.
    * Modbus TCP / ESPHome Bridge setup.
    * Entities, sensors, switches, and calibration numbers.
 

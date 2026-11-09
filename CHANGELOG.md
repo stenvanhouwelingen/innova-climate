@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-11-09
+
+### ✨ Added
+* **Water Temperature $T_2$ Threshold Controls (#6)**:
+  * Added **Minimum Water Temperature Heating ($L_{LO}$)** (`Register 510` on `n273025d` / `Register 218` on `n273025c`, $20.0\ ^\circ\text{C} \text{ to } 50.0\ ^\circ\text{C}$) and **Maximum Water Temperature Cooling ($L_{HI}$)** (`Register 511` / `Register 219`, $5.0\ ^\circ\text{C} \text{ to } 25.0\ ^\circ\text{C}$) across the Home Assistant integration (`number` entities), `innova-modbus` library, and standalone ESPHome YAML packages.
+* **Filomuro Multi-Position Flap Control (`Register 457`)**:
+  * Added `InnovaFlapMode` (`auto` -> `0`, `position_1` -> `1`, `position_2` -> `2`, `position_3` -> `3`, `swing` -> `7`).
+  * Added dedicated **Flap Position** (`select`) entity and multi-position `swing_modes` on the **Thermostat** (`climate`) entity so Filomuro and Airleaf dampers can be opened fully (`Position 3`), held at intermediate angles (`Position 1` / `Position 2`), returned to `Auto`, or set to `Oscillating Swing` (`7`).
+* **Display LED & Setpoint Range Controls (`n273025d`)**:
+  * Added **Turn Off Display LED** (`switch`, Program Register `553` Bit 11) for bedroom stealth mode.
+  * Added **Web Minimum Setpoint ($SP_{L,W}$)** (`Register 453`) and **Web Maximum Setpoint ($SP_{H,W}$)** (`Register 454`) configuration `number` entities.
+* **Home Assistant 2026.11 Marketplace & Quality Scale Updates**:
+  * Updated `hacs.json` (`homeassistant: "2025.1.0"`), added `"loggers"` to `manifest.json` for 1-click UI debug logging, redacted network host/IP in `diagnostics.py`, and updated documentation for the Home Assistant Marketplace transition.
+
+### 🐛 Fixed & Optimized
+* **Fixed Filomuro Halfway-Opening Flap Bug**: Previously, toggling Flap Swing ON wrote `1` (`Position 1` = fixed 45° / halfway open on Filomuro) instead of `7` (`Oscillating Swing`).
+* **Fixed Operational Status, Fan Status & `HVACAction` Decoding**:
+  * Parsed Program Register (`553` / `201`) before Status Register (`150` / `104`) so `power_on` is always synchronized before evaluating status bits.
+  * Prioritized Water-Wait Fan-Stop status bits (`Bits 2–6` on modern, `Bits 2–4` on legacy) over active Cooling/Heating bits (`Bits 0–1`), accurately reporting `HVACAction.IDLE` and `"Fan Stopped (Water T2 too cold/warm...)"` when the unit is waiting on heat pump water temperature.
+  * Reported `"Stopped (Target reached)"` for `fan_status_description` when the room setpoint is satisfied and `fan_rpm == 0`.
+* **Eliminated Post-Write UI Bounce**: Added `async_notify_write(delay=2.0)` to `InnovaCoordinator` so optimistic state updates broadcast immediately while debouncing the hardware follow-up poll by 2.0 seconds until the PCB settles.
+* **Fast / Slow Register Polling & Optional Register Fallback**: Split Modbus reads into fast telemetry batches (every poll) and slow configuration batches (every 6th poll or after writes), cutting RS485 traffic by ~43% and gracefully handling older firmware revisions that reject optional registers (`218–219`, `457`, `510–511`).
+* **Legacy `n273025c` Decoding Parity**: Unified float rounding, disconnected probe detection (`<= -30.0 °C`), window contact polarity, and `web_*` supervisor flags between modern and legacy boards.
+
+---
+
 ## [1.0.0] - 2026-08-31
 
 ### 🚀 Major Architectural Milestone: Native Home Assistant HACS Integration

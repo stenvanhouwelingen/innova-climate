@@ -7,17 +7,26 @@ import logging
 from typing import Any, Protocol
 
 from .const import (
+    FLAP_MODE_TO_REG,
+    InnovaAction,
     InnovaBoardFamily,
     InnovaFanSpeed,
+    InnovaFlapMode,
     InnovaMode,
     InnovaRegistersLegacy,
     InnovaRegistersModern,
-    MAX_REGISTERS_PER_READ,
     MIN_COMMAND_INTERVAL_SECONDS,
 )
 from .model import InnovaData
 
 _LOGGER = logging.getLogger(__name__)
+
+OPTIONAL_BATCHES: set[tuple[int, int]] = {
+    (218, 2),  # Legacy LLO / LHI water temp thresholds
+    (457, 1),  # Modern Flap Swing (only on motorized louver models)
+    (510, 2),  # Modern LLO / LHI water temp thresholds (Firmware 2.0+)
+}
+SLOW_POLL_MODULO = 6  # Poll static/config registers every 6th cycle (~60s)
 
 
 class ModbusConnectionProtocol(Protocol):
@@ -47,6 +56,9 @@ class InnovaFancoil:
         self._board_family = board_family
         self.data: InnovaData = InnovaData(board_family=board_family)
         self._lock = asyncio.Lock()
+        self._register_cache: dict[int, int] = {}
+        self._unsupported_batches: set[tuple[int, int]] = set()
+        self._poll_count: int = 0
 
     @property
     def slave_id(self) -> int:
@@ -61,58 +73,79 @@ class InnovaFancoil:
     async def async_update(self) -> InnovaData:
         """Fetch all device registers in safe batches and parse into InnovaData."""
         async with self._lock:
-            registers: dict[int, int] = {}
+            include_slow = (self._poll_count % SLOW_POLL_MODULO == 0) or not self._register_cache
+            self._poll_count += 1
 
             if self._board_family == InnovaBoardFamily.N273025D:
                 # Modern board batch list (Max 3 registers per request)
-                batches = [
+                fast_batches = [
                     (0, 3),     # Regs 0, 1, 2 (T_AIR, T_WATER_2, T_WATER_4)
                     (20, 1),    # Reg 20 (RH)
                     (150, 2),   # Regs 150, 151 (Status, Alarms)
-                    (198, 2),   # Regs 198, 199 (FW_Release, FW_ID)
-                    (302, 2),   # Regs 302, 303 (SPL_W, SPH_W)
                     (305, 1),   # Reg 305 (Target Setpoint)
                     (457, 1),   # Reg 457 (Flap Swing)
-                    (530, 1),   # Reg 530 (T1 Sensor Offset)
                     (553, 1),   # Reg 553 (PRG Program Control)
                     (556, 2),   # Regs 556, 557 (Seasonal Mode, Web Flags)
                 ]
+                slow_batches = [
+                    (198, 2),   # Regs 198, 199 (FW_Release, FW_ID)
+                    (302, 2),   # Regs 302, 303 (SPL_W, SPH_W)
+                    (510, 2),   # Regs 510, 511 (LLO Min Heating Water Temp, LHI Max Cooling Water Temp)
+                    (530, 1),   # Reg 530 (T1 Sensor Offset)
+                ]
             else:
                 # Legacy board batch list
-                batches = [
+                fast_batches = [
                     (0, 3),     # Regs 0, 1, 2 (T_AIR, T_WATER_2, T_WATER_4)
                     (20, 1),    # Reg 20 (RH)
                     (104, 2),   # Regs 104, 105 (Status, Alarms)
                     (201, 1),   # Reg 201 (PRG Program Control)
                     (231, 1),   # Reg 231 (Target Setpoint)
                     (233, 1),   # Reg 233 (Seasonal Mode)
+                ]
+                slow_batches = [
+                    (218, 2),   # Regs 218, 219 (LLO Min Heating Water Temp, LHI Max Cooling Water Temp)
                     (242, 1),   # Reg 242 (T1 Sensor Offset)
                     (245, 3),   # Regs 245, 246, 247 (SPL_W, SPH_W, Web Flags)
                 ]
 
+            raw_batches = fast_batches + (slow_batches if include_slow else [])
+            batches = [b for b in raw_batches if b not in self._unsupported_batches]
+
+            read_any = False
             for start_addr, count in batches:
                 try:
                     vals = await self._read_registers(start_addr, count)
+                    read_any = True
                     for i, val in enumerate(vals):
-                        registers[start_addr + i] = val
+                        self._register_cache[start_addr + i] = val
                 except Exception as err:
-                    _LOGGER.warning(
-                        "Failed to read Modbus registers starting at %d (count %d): %s",
-                        start_addr,
-                        count,
-                        err,
-                    )
+                    if (start_addr, count) in OPTIONAL_BATCHES:
+                        self._unsupported_batches.add((start_addr, count))
+                        _LOGGER.debug(
+                            "Optional Modbus registers at %d (count %d) not supported by firmware, skipping on future polls: %s",
+                            start_addr,
+                            count,
+                            err,
+                        )
+                    else:
+                        _LOGGER.warning(
+                            "Failed to read Modbus registers starting at %d (count %d): %s",
+                            start_addr,
+                            count,
+                            err,
+                        )
                 await asyncio.sleep(MIN_COMMAND_INTERVAL_SECONDS)
 
-            if not registers:
+            if not read_any:
                 raise RuntimeError(
                     f"Failed to communicate with Innova Fancoil (slave_id={self._slave_id}): No registers could be read"
                 )
 
             if self._board_family == InnovaBoardFamily.N273025D:
-                self.data = InnovaData.from_registers_modern(registers)
+                self.data = InnovaData.from_registers_modern(self._register_cache)
             else:
-                self.data = InnovaData.from_registers_legacy(registers)
+                self.data = InnovaData.from_registers_legacy(self._register_cache)
 
             return self.data
 
@@ -197,6 +230,14 @@ class InnovaFancoil:
         await self._write_register(prg_reg, new_prg)
         self.data.power_on = power_on
         self.data.raw_program = new_prg
+        if not power_on:
+            self.data.action = InnovaAction.STANDBY
+            self.data.status_description = "Standby"
+            self.data.fan_status_description = "Stopped (Standby)"
+        elif self.data.action == InnovaAction.STANDBY:
+            self.data.action = InnovaAction.IDLE
+            self.data.status_description = "Idle"
+            self.data.fan_status_description = "Stopped (Target reached)"
 
     async def async_set_supervisor_mode(self, enable: bool) -> None:
         """Enable or disable remote supervisor mode (locks local panel buttons)."""
@@ -218,14 +259,37 @@ class InnovaFancoil:
             self.data.supervisor_mode = enable
             self.data.raw_web_flags = new_web
 
+    async def async_set_led_off(self, led_off: bool) -> None:
+        """Turn off or on the front status LED / display lighting (Bit 0 of WEB register)."""
+        async with self._lock:
+            web_reg = (
+                InnovaRegistersModern.WEB
+                if self._board_family == InnovaBoardFamily.N273025D
+                else InnovaRegistersLegacy.WEB
+            )
+            current_web = self.data.raw_web_flags
+            new_web = (current_web | (1 << 0)) if led_off else (current_web & ~(1 << 0))
+            await self._write_register(web_reg, new_web)
+            self.data.web_led_off = led_off
+            self.data.raw_web_flags = new_web
+
     async def async_set_flap_swing(self, swing: bool) -> None:
-        """Enable or disable motorized flap swing."""
+        """Enable or disable motorized flap continuous swing (Filomuro)."""
+        await self.async_set_flap_mode(
+            InnovaFlapMode.SWING if swing else InnovaFlapMode.AUTO
+        )
+
+    async def async_set_flap_mode(self, flap_mode: InnovaFlapMode | str) -> None:
+        """Set motorized flap mode / position (0=Auto, 1=Pos1, 2=Pos2, 3=Pos3, 7=Swing)."""
         if self._board_family != InnovaBoardFamily.N273025D:
             return
         async with self._lock:
-            val = 1 if swing else 0
+            mode_enum = InnovaFlapMode(flap_mode)
+            val = FLAP_MODE_TO_REG[mode_enum]
             await self._write_register(InnovaRegistersModern.FSW, val)
-            self.data.flap_swing = swing
+            self.data.raw_flap = val
+            self.data.flap_mode = mode_enum
+            self.data.flap_swing = mode_enum == InnovaFlapMode.SWING
 
     async def async_set_keypad_lock(self, locked: bool) -> None:
         """Lock or unlock the physical on-board touch panel."""
@@ -257,6 +321,54 @@ class InnovaFancoil:
             )
             await self._write_register(reg, val)
             self.data.room_temp_offset = offset
+
+    async def async_set_min_water_temp_heating(self, temperature: float) -> None:
+        """Set minimum water temperature for heating (LLO)."""
+        async with self._lock:
+            val = int(round(temperature * 10.0))
+            reg = (
+                InnovaRegistersModern.LLO
+                if self._board_family == InnovaBoardFamily.N273025D
+                else InnovaRegistersLegacy.LLO
+            )
+            await self._write_register(reg, val)
+            self.data.min_water_temp_heating = round(temperature, 1)
+
+    async def async_set_max_water_temp_cooling(self, temperature: float) -> None:
+        """Set maximum water temperature for cooling (LHI)."""
+        async with self._lock:
+            val = int(round(temperature * 10.0))
+            reg = (
+                InnovaRegistersModern.LHI
+                if self._board_family == InnovaBoardFamily.N273025D
+                else InnovaRegistersLegacy.LHI
+            )
+            await self._write_register(reg, val)
+            self.data.max_water_temp_cooling = round(temperature, 1)
+
+    async def async_set_min_setpoint_limit(self, temperature: float) -> None:
+        """Set web minimum setpoint limit (SPL_W)."""
+        async with self._lock:
+            val = int(round(temperature * 10.0))
+            reg = (
+                InnovaRegistersModern.SPL_W
+                if self._board_family == InnovaBoardFamily.N273025D
+                else InnovaRegistersLegacy.SPL_W
+            )
+            await self._write_register(reg, val)
+            self.data.web_min_setpoint = round(temperature, 1)
+
+    async def async_set_max_setpoint_limit(self, temperature: float) -> None:
+        """Set web maximum setpoint limit (SPH_W)."""
+        async with self._lock:
+            val = int(round(temperature * 10.0))
+            reg = (
+                InnovaRegistersModern.SPH_W
+                if self._board_family == InnovaBoardFamily.N273025D
+                else InnovaRegistersLegacy.SPH_W
+            )
+            await self._write_register(reg, val)
+            self.data.web_max_setpoint = round(temperature, 1)
 
     async def _read_registers(self, start_addr: int, count: int) -> list[int]:
         """Read a chunk of holding registers from the Modbus connection."""
@@ -304,6 +416,7 @@ class InnovaFancoil:
                     value=value,
                 )
 
+            self._register_cache[address] = value
             await asyncio.sleep(MIN_COMMAND_INTERVAL_SECONDS)
             return
         raise RuntimeError(f"Unsupported connection backend: {type(self._connection)}")

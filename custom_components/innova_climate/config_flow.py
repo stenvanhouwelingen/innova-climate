@@ -75,9 +75,13 @@ class InnovaClimateConfigFlow(ConfigFlow, domain=DOMAIN):
         """Confirm setup of automatically discovered Innova serial proxy device."""
         if user_input is not None:
             host = user_input[CONF_HOST]
-            port = user_input[CONF_PORT]
-            slave_id = user_input[CONF_SLAVE_ID]
+            port = int(user_input[CONF_PORT])
+            slave_id = int(user_input[CONF_SLAVE_ID])
             board_family = user_input.get(CONF_BOARD_FAMILY, InnovaBoardFamily.N273025D)
+
+            unique_id = f"innova_tcp_{host}_{port}_{slave_id}"
+            await self.async_set_unique_id(unique_id)
+            self._abort_if_unique_id_configured()
 
             return self.async_create_entry(
                 title=f"Innova Fancoil ({self._discovered_name or host})",
@@ -166,7 +170,7 @@ class InnovaClimateConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             serial_port = user_input[CONF_SERIAL_PORT]
-            slave_id = user_input[CONF_SLAVE_ID]
+            slave_id = int(user_input[CONF_SLAVE_ID])
             unique_id = f"innova_serial_{serial_port}_{slave_id}"
 
             await self.async_set_unique_id(unique_id)
@@ -178,6 +182,7 @@ class InnovaClimateConfigFlow(ConfigFlow, domain=DOMAIN):
                 data={
                     CONF_CONNECTION_TYPE: CONNECTION_TYPE_SERIAL,
                     **user_input,
+                    CONF_SLAVE_ID: slave_id,
                 },
             )
 
@@ -249,8 +254,8 @@ class InnovaClimateConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             host = user_input[CONF_HOST]
-            port = user_input[CONF_PORT]
-            slave_id = user_input[CONF_SLAVE_ID]
+            port = int(user_input[CONF_PORT])
+            slave_id = int(user_input[CONF_SLAVE_ID])
             unique_id = f"innova_tcp_{host}_{port}_{slave_id}"
 
             await self.async_set_unique_id(unique_id)
@@ -262,6 +267,8 @@ class InnovaClimateConfigFlow(ConfigFlow, domain=DOMAIN):
                 data={
                     CONF_CONNECTION_TYPE: CONNECTION_TYPE_TCP,
                     **user_input,
+                    CONF_PORT: port,
+                    CONF_SLAVE_ID: slave_id,
                 },
             )
 
@@ -307,9 +314,14 @@ class InnovaClimateConfigFlow(ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="reconfigure_failed")
 
         if user_input is not None:
+            updated_input = dict(user_input)
+            if CONF_PORT in updated_input:
+                updated_input[CONF_PORT] = int(updated_input[CONF_PORT])
+            if CONF_SLAVE_ID in updated_input:
+                updated_input[CONF_SLAVE_ID] = int(updated_input[CONF_SLAVE_ID])
             return self.async_update_reload_and_abort(
                 entry,
-                data={**entry.data, **user_input},
+                data={**entry.data, **updated_input},
             )
 
         conn_type = entry.data.get(CONF_CONNECTION_TYPE, CONNECTION_TYPE_TCP)

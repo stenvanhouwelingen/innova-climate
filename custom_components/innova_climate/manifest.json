@@ -7,8 +7,9 @@
   "integration_type": "device",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/stenvanhouwelingen/innova-climate/issues",
+  "loggers": ["custom_components.innova_climate", "innova_modbus", "pymodbus"],
   "requirements": ["pymodbus>=3.6.0", "pyserial>=3.5"],
-  "version": "1.0.0",
+  "version": "1.1.0",
   "zeroconf": [
     {
       "type": "_esphomelib._tcp.local.",

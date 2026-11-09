@@ -1,6 +1,7 @@
 # Innova Fancoil Climate Control for Home Assistant
 
 [![Home Assistant Integration](https://img.shields.io/badge/Home%20Assistant-Integration-blue.svg)](docs/wiki/08_home_assistant_integration_guide.md)
+[![Open your Home Assistant instance and open a repository in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=stenvanhouwelingen&repository=innova-climate&category=integration)
 [![HACS](https://img.shields.io/badge/HACS-Custom%20Integration-orange.svg)](custom_components/innova_climate)
 [![Continuous Integration](https://github.com/stenvanhouwelingen/innova-climate/actions/workflows/ci.yaml/badge.svg)](https://github.com/stenvanhouwelingen/innova-climate/actions/workflows/ci.yaml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -76,13 +77,23 @@ Connect the RS-485 transceiver screw terminals to the fancoil PCB:
 
 ---
 
-### 3. Install in Home Assistant via HACS
+### 3. Install in Home Assistant via Marketplace / HACS
 
-1. In Home Assistant, open **HACS** $\rightarrow$ **Integrations** $\rightarrow$ **Custom repositories**.
+#### Option A: Via Home Assistant Marketplace (HA 2026.11+)
+[![Open your Home Assistant instance and open a repository in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=stenvanhouwelingen&repository=innova-climate&category=integration)
+
+1. Click the badge above, or navigate to **Settings** $\rightarrow$ **Marketplace** $\rightarrow$ **Custom repositories**.
+2. Add `https://github.com/stenvanhouwelingen/innova-climate` with category **Integration**.
+3. Click **Download**, then restart Home Assistant when prompted.
+
+#### Option B: Via HACS (Earlier Home Assistant versions)
+1. In Home Assistant, open **HACS** $\rightarrow$ **Integrations** $\rightarrow$ **Custom repositories** (three dots in top right).
 2. Add `https://github.com/stenvanhouwelingen/innova-climate` with category **Integration**.
 3. Click **Download**, then restart Home Assistant.
-4. Go to **Settings** $\rightarrow$ **Devices & Services** $\rightarrow$ **Add Integration** $\rightarrow$ Search **Innova Fancoil Climate Control**.
-5. Enter the IP address of your ESP32 device on port `8899` (default).
+
+#### Final Step: Add the Integration
+1. Go to **Settings** $\rightarrow$ **Devices & Services** $\rightarrow$ **Add Integration** $\rightarrow$ Search **Innova Fancoil Climate Control**.
+2. Enter the IP address of your ESP32 device on port `8899` (default).
 
 👉 For complete setup instructions, read **[Chapter 8: Home Assistant Integration Guide](docs/wiki/08_home_assistant_integration_guide.md)**.
 
