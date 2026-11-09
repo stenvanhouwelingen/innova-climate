@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, ClassVar
 
 from homeassistant.components.climate import (
     ClimateEntity,
@@ -26,6 +26,8 @@ from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .coordinator import InnovaDataUpdateCoordinator
+from .entity import InnovaEntity
 from .innova_modbus import (
     InnovaAction,
     InnovaBoardFamily,
@@ -33,9 +35,6 @@ from .innova_modbus import (
     InnovaFlapMode,
     InnovaMode,
 )
-
-from .coordinator import InnovaDataUpdateCoordinator
-from .entity import InnovaEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -94,23 +93,23 @@ class InnovaClimateEntity(InnovaEntity, ClimateEntity):
     _attr_min_temp = 16.0
     _attr_max_temp = 30.0
 
-    _attr_hvac_modes = [
+    _attr_hvac_modes: ClassVar[list[HVACMode]] = [
         HVACMode.OFF,
         HVACMode.HEAT,
         HVACMode.COOL,
         HVACMode.AUTO,
     ]
-    _attr_fan_modes = [
+    _attr_fan_modes: ClassVar[list[str]] = [
         FAN_AUTO,
         FAN_LOW,
         FAN_HIGH,
     ]
-    _attr_preset_modes = [
+    _attr_preset_modes: ClassVar[list[str]] = [
         PRESET_NONE,
         PRESET_SLEEP,
         PRESET_BOOST,
     ]
-    _attr_swing_modes = [
+    _attr_swing_modes: ClassVar[list[str]] = [
         SWING_OFF,
         "position_1",
         "position_2",

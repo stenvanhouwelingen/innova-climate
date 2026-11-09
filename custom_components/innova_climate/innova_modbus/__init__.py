@@ -2,6 +2,9 @@
 
 from .const import (
     FLAP_MODE_TO_REG,
+    MAX_REGISTERS_PER_READ,
+    MIN_COMMAND_INTERVAL_SECONDS,
+    REG_TO_FLAP_MODE,
     InnovaAction,
     InnovaBoardFamily,
     InnovaFanSpeed,
@@ -9,15 +12,15 @@ from .const import (
     InnovaMode,
     InnovaRegistersLegacy,
     InnovaRegistersModern,
-    MAX_REGISTERS_PER_READ,
-    MIN_COMMAND_INTERVAL_SECONDS,
-    REG_TO_FLAP_MODE,
 )
 from .device import InnovaFancoil
 from .model import InnovaData
 
 __all__ = [
     "FLAP_MODE_TO_REG",
+    "MAX_REGISTERS_PER_READ",
+    "MIN_COMMAND_INTERVAL_SECONDS",
+    "REG_TO_FLAP_MODE",
     "InnovaAction",
     "InnovaBoardFamily",
     "InnovaData",
@@ -27,7 +30,4 @@ __all__ = [
     "InnovaMode",
     "InnovaRegistersLegacy",
     "InnovaRegistersModern",
-    "MAX_REGISTERS_PER_READ",
-    "MIN_COMMAND_INTERVAL_SECONDS",
-    "REG_TO_FLAP_MODE",
 ]

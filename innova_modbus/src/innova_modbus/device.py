@@ -8,6 +8,7 @@ from typing import Any, Protocol
 
 from .const import (
     FLAP_MODE_TO_REG,
+    MIN_COMMAND_INTERVAL_SECONDS,
     InnovaAction,
     InnovaBoardFamily,
     InnovaFanSpeed,
@@ -15,7 +16,6 @@ from .const import (
     InnovaMode,
     InnovaRegistersLegacy,
     InnovaRegistersModern,
-    MIN_COMMAND_INTERVAL_SECONDS,
 )
 from .model import InnovaData
 
@@ -119,7 +119,7 @@ class InnovaFancoil:
                     read_any = True
                     for i, val in enumerate(vals):
                         self._register_cache[start_addr + i] = val
-                except Exception as err:
+                except Exception as err:  # noqa: BLE001
                     if (start_addr, count) in OPTIONAL_BATCHES:
                         self._unsupported_batches.add((start_addr, count))
                         _LOGGER.debug(
@@ -153,7 +153,7 @@ class InnovaFancoil:
         """Set the target room temperature setpoint."""
         async with self._lock:
             # Round to 0.5 °C step and convert to 0.1 scale (e.g. 21.5 -> 215)
-            val = int(round(temperature * 10.0))
+            val = round(temperature * 10.0)
             reg = (
                 InnovaRegistersModern.SP
                 if self._board_family == InnovaBoardFamily.N273025D
@@ -310,7 +310,7 @@ class InnovaFancoil:
     async def async_set_room_temp_offset(self, offset: float) -> None:
         """Set calibration offset for T1 room air sensor (-1.2 °C to +1.2 °C)."""
         async with self._lock:
-            val = int(round(offset * 10.0))
+            val = round(offset * 10.0)
             # Convert signed int16 to uint16 word for Modbus transmission
             if val < 0:
                 val = (val + 65536) & 0xFFFF
@@ -325,7 +325,7 @@ class InnovaFancoil:
     async def async_set_min_water_temp_heating(self, temperature: float) -> None:
         """Set minimum water temperature for heating (LLO)."""
         async with self._lock:
-            val = int(round(temperature * 10.0))
+            val = round(temperature * 10.0)
             reg = (
                 InnovaRegistersModern.LLO
                 if self._board_family == InnovaBoardFamily.N273025D
@@ -337,7 +337,7 @@ class InnovaFancoil:
     async def async_set_max_water_temp_cooling(self, temperature: float) -> None:
         """Set maximum water temperature for cooling (LHI)."""
         async with self._lock:
-            val = int(round(temperature * 10.0))
+            val = round(temperature * 10.0)
             reg = (
                 InnovaRegistersModern.LHI
                 if self._board_family == InnovaBoardFamily.N273025D
@@ -349,7 +349,7 @@ class InnovaFancoil:
     async def async_set_min_setpoint_limit(self, temperature: float) -> None:
         """Set web minimum setpoint limit (SPL_W)."""
         async with self._lock:
-            val = int(round(temperature * 10.0))
+            val = round(temperature * 10.0)
             reg = (
                 InnovaRegistersModern.SPL_W
                 if self._board_family == InnovaBoardFamily.N273025D
@@ -361,7 +361,7 @@ class InnovaFancoil:
     async def async_set_max_setpoint_limit(self, temperature: float) -> None:
         """Set web maximum setpoint limit (SPH_W)."""
         async with self._lock:
-            val = int(round(temperature * 10.0))
+            val = round(temperature * 10.0)
             reg = (
                 InnovaRegistersModern.SPH_W
                 if self._board_family == InnovaBoardFamily.N273025D

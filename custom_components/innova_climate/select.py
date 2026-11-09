@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 from homeassistant.components.select import (
     SelectEntity,
@@ -14,6 +15,8 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .coordinator import InnovaDataUpdateCoordinator
+from .entity import InnovaEntity
 from .innova_modbus import (
     InnovaBoardFamily,
     InnovaData,
@@ -22,9 +25,6 @@ from .innova_modbus import (
     InnovaFlapMode,
     InnovaMode,
 )
-
-from .coordinator import InnovaDataUpdateCoordinator
-from .entity import InnovaEntity
 
 
 @dataclass(frozen=True, kw_only=True)

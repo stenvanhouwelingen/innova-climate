@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -15,10 +15,9 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .innova_modbus import InnovaData
-
 from .coordinator import InnovaDataUpdateCoordinator
 from .entity import InnovaEntity
+from .innova_modbus import InnovaData
 
 
 @dataclass(frozen=True, kw_only=True)

@@ -5,14 +5,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .const import (
+    REG_TO_FLAP_MODE,
+    TEMP_MAX_VALID,
+    TEMP_MIN_VALID,
     InnovaAction,
     InnovaBoardFamily,
     InnovaFanSpeed,
     InnovaFlapMode,
     InnovaMode,
-    REG_TO_FLAP_MODE,
-    TEMP_MAX_VALID,
-    TEMP_MIN_VALID,
 )
 
 

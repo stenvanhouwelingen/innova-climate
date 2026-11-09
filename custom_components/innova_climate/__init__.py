@@ -2,17 +2,21 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 from typing import Any
 
 import voluptuous as vol
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import (
     config_validation as cv,
+)
+from homeassistant.helpers import (
     device_registry as dr,
+)
+from homeassistant.helpers import (
     entity_registry as er,
 )
 
@@ -80,10 +84,8 @@ class AsyncModbusClientWrapper:
             except Exception as err:
                 if attempt == 0:
                     _LOGGER.debug("Retrying Modbus read after connection reset: %s", err)
-                    try:
+                    with contextlib.suppress(Exception):
                         self.client.close()
-                    except Exception:
-                        pass
                     continue
                 raise
 
@@ -112,10 +114,8 @@ class AsyncModbusClientWrapper:
             except Exception as err:
                 if attempt == 0:
                     _LOGGER.debug("Retrying Modbus write after connection reset: %s", err)
-                    try:
+                    with contextlib.suppress(Exception):
                         self.client.close()
-                    except Exception:
-                        pass
                     continue
                 raise
 
@@ -282,8 +282,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if unload_ok:
         coordinator: InnovaDataUpdateCoordinator = entry.runtime_data
         if hasattr(coordinator.device._connection, "client"):
-            try:
+            with contextlib.suppress(Exception):
                 coordinator.device._connection.client.close()
-            except Exception:
-                pass
     return unload_ok

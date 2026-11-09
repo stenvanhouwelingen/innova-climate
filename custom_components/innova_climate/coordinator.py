@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
 import logging
-from typing import Callable
+from collections.abc import Callable
+from datetime import datetime, timedelta
 
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.event import async_call_later
@@ -121,5 +121,5 @@ class InnovaDataUpdateCoordinator(DataUpdateCoordinator[InnovaData]):
         for callback_fn in self._event_callbacks:
             try:
                 callback_fn(event_type, data)
-            except Exception as err:
+            except Exception as err:  # noqa: BLE001
                 _LOGGER.error("Error dispatching event callback: %s", err)
